@@ -178,3 +178,7 @@ Signup at: [https://sentry.io/signup/?code=cookiecutter](https://sentry.io/signu
 ## Deployment
 
 See full [Docker deployment guide](http://cookiecutter-django.readthedocs.io/en/latest/deployment-with-docker.html).
+
+## Download Model
+
+https://github.com/scieloorg/markapi/wiki/Guia-r%C3%A1pido:-baixar-e-configurar-o-modelo-do-MarkAPI-para-marca%C3%A7%C3%A3o-de-refer%C3%AAncias-em-PDF
