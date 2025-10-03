@@ -295,5 +295,6 @@ SIMPLE_JWT = {
 }
 
 # LLAMA
+LLAMA_ENABLED = env.bool("LLAMA_ENABLED", default=False)
 LLAMA_MODEL_DIR = ROOT_DIR / "llama3/llama-3.2"
 MODEL_LLAMA = "llama-3.2-3b-instruct-q4_k_m.gguf"
