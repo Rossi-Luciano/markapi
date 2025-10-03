@@ -49,4 +49,10 @@ class GenericLlama:
       'role': 'user',
       'content': user_input
     })
-    return self.llm.create_chat_completion(messages=input, response_format=self.response_format, max_tokens=self.max_tokens, temperature=self.temperature, top_p=self.top_p)
+    return self.llm.create_chat_completion(
+       messages=input, 
+       response_format=self.response_format, 
+       max_tokens=self.max_tokens, 
+       temperature=self.temperature, 
+       top_p=self.top_p
+    )
