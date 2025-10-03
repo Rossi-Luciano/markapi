@@ -2,6 +2,16 @@ from config.settings.base import LLAMA_ENABLED, LLAMA_MODEL_DIR, MODEL_LLAMA
 
 import os
 
+
+class LlamaDisabledError(Exception):
+    pass
+
+class LlamaModelNotFoundError(FileNotFoundError):
+    pass
+
+class LlamaNotInstalledError(ImportError):
+    pass
+
 class GenericLlama:
 
   def __init__(self, messages, response_format, max_tokens=4000, temperature=0.5, top_p=0.5): 
