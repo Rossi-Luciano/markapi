@@ -35,6 +35,11 @@ class GenericLlama:
       model_path = os.path.join(LLAMA_MODEL_DIR, MODEL_LLAMA)
       if not os.path.isfile(model_path):
         raise LlamaModelNotFoundError(f"LLaMA model file not found at {model_path}. Please ensure the model is downloaded and the path is correct.")
+
+      try:
+        GenericLlama._cached_llm = Llama(model_path=model_path, n_ctx=max_tokens)
+      except Exception as e:
+        raise RuntimeError(f"Failed to initialize LLaMA model: {e}") from e
   def run(self, user_input):
     input = self.messages.copy()
     input.append({
