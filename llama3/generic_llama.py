@@ -26,6 +26,11 @@ class GenericLlama:
     if not LLAMA_ENABLED:
       raise LlamaDisabledError("LLaMA is disabled in settings.")
     
+    if GenericLlama._cached_llm is None:
+      try:
+         from llama_cpp import Llama
+      except ImportError as e:
+         raise LlamaNotInstalledError("The 'llama-cpp-python' package is not installed. Please use the llama-activated Docker image (Dockerfile.llama).") from e
   def run(self, user_input):
     input = self.messages.copy()
     input.append({
