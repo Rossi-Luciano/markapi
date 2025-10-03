@@ -40,6 +40,9 @@ class GenericLlama:
         GenericLlama._cached_llm = Llama(model_path=model_path, n_ctx=max_tokens)
       except Exception as e:
         raise RuntimeError(f"Failed to initialize LLaMA model: {e}") from e
+      
+    self.llm = GenericLlama._cached_llm
+
   def run(self, user_input):
     input = self.messages.copy()
     input.append({
