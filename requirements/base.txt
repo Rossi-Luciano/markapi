@@ -3,6 +3,7 @@ redis==5.0.1  # https://github.com/redis/redis-py
 celery==5.3.6  # pyup: < 6.0  # https://github.com/celery/celery
 flower==2.0.1  # https://github.com/mher/flower
 hiredis==2.2.3  # https://github.com/redis/hiredis-py
+
 # Django
 # ------------------------------------------------------------------------------
 django==5.0.8
@@ -26,7 +27,6 @@ wagtail-autocomplete==0.11.0
 # ------------------------------------------------------------------------------
 lxml==4.9.4 # https://github.com/lxml/lxml
 
-
 # Kombu
 # ------------------------------------------------------------------------------
 kombu==5.4.2
@@ -34,8 +34,6 @@ kombu==5.4.2
 # Tenacity
 # ------------------------------------------------------------------------------
 tenacity==8.2.3  # https://pypi.org/project/tenacity/
-
-whitenoise==6.6.0  # https://github.com/evansd/whitenoise
 
 # Llama
 # ------------------------------------------------------------------------------
