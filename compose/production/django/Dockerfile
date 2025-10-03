@@ -39,12 +39,6 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV BUILD_ENV ${BUILD_ENVIRONMENT}
 
-# Install llama-cpp-python with specific CMAKE flags for Kubernetes nodes without AVX support
-ARG DISABLE_AVX=true
-
-# Set the version of llama-cpp-python
-ARG LLAMA_VERSION=0.3.14
-
 WORKDIR ${APP_HOME}
 
 RUN addgroup --system django \
@@ -68,15 +62,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # copy python dependency wheels from python-build-stage
 COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
 
-# use wheels to install python dependencies (excluding llama-cpp-python)
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl" ! -name "llama_cpp_python*") && rm -rf /wheels/
-
-# Install llama-cpp-python with specific CMAKE flags for Kubernetes nodes without AVX support
-RUN if [ "${DISABLE_AVX}" = "true" ]; then \
-  CMAKE_ARGS='-DLLAMA_AVX=OFF -DLLAMA_AVX2=OFF -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_OPENMP=ON' pip install llama-cpp-python==${LLAMA_VERSION} --force-reinstall --no-cache-dir; \
-    else \
-  pip install llama-cpp-python==${LLAMA_VERSION} --force-reinstall --no-cache-dir; \
-    fi
+# use wheels to install python dependencies
+RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl") && rm -rf /wheels/
 
 COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
