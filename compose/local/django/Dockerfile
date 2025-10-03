@@ -27,9 +27,6 @@ RUN apt-get update && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 50 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar ninja-build y cmake
-RUN apt-get install -y ninja-build cmake
-
 # Actualizar pip, setuptools y wheel antes de instalar dependencias
 RUN python -m pip install --upgrade pip setuptools wheel
 
