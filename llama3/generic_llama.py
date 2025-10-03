@@ -31,6 +31,10 @@ class GenericLlama:
          from llama_cpp import Llama
       except ImportError as e:
          raise LlamaNotInstalledError("The 'llama-cpp-python' package is not installed. Please use the llama-activated Docker image (Dockerfile.llama).") from e
+
+      model_path = os.path.join(LLAMA_MODEL_DIR, MODEL_LLAMA)
+      if not os.path.isfile(model_path):
+        raise LlamaModelNotFoundError(f"LLaMA model file not found at {model_path}. Please ensure the model is downloaded and the path is correct.")
   def run(self, user_input):
     input = self.messages.copy()
     input.append({
