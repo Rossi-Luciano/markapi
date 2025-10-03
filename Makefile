@@ -38,6 +38,9 @@ build_date: ## Show build date
 build:  ## Build app using $(compose)
 	@docker compose -f $(compose) build
 
+build_llama:  ## Build app using $(compose) with llama enabled
+	@docker compose -f llama.$(compose) build
+
 build_no_cache:  ## Build app using $(compose)
 	@docker compose -f $(compose) build --no-cache
 
