@@ -1,6 +1,5 @@
+from config.settings.base import LLAMA_ENABLED, LLAMA_MODEL_DIR, MODEL_LLAMA
 
-from config.settings.base import LLAMA_MODEL_DIR, MODEL_LLAMA
-from llama_cpp import Llama
 import os
 
 class GenericLlama:
