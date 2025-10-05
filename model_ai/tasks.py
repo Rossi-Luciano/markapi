@@ -18,6 +18,6 @@ def download_model(id):
         instance = LlamaModel.objects.get(id=id)
         get_model(instance.hf_token, instance.name_model, instance.name_file)
         instance.download_status = DownloadStatus.DOWNLOADED
-    except:
+    except Exception:
         instance.download_status = DownloadStatus.ERROR
     instance.save()
