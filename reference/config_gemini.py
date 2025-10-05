@@ -139,7 +139,7 @@ def create_prompt_reference(references):
                         "source": "The role of physical activity on the need for revision total knee arthroplasty in individuals with osteoarthritis of the knee [dissertation]",
                         "organization": "University of Pittsburgh",
                         "location": "[Pittsburgh (PA)]",
-                        "num_pages": 436 p
+                        "num_pages": "436 p"
                 }},
     {{
                     "full_text": "Schimper, A. F. W. 1903. Plant geography upon a physiological basis. Clarendon Press. Oxford, UK. 839 pp.",
@@ -150,7 +150,7 @@ def create_prompt_reference(references):
                     "date": 1903,
                     "source": "Plant geography upon a physiological basis",
                     "organization": "Clarendon Press",
-                    "location": "Oxford, UK"
+                    "location": "Oxford, UK",
                     "num_pages": 839
                 }},
     {{
@@ -241,10 +241,10 @@ def create_prompt_reference(references):
                     ],
                     "date": c2005,
                     "source": "Advanced practice nursing: an integrative approach",
-                    "edition: "3rd ed"
+                    "edition: "3rd ed",
                     "organization": "Elsevier Saunders",
                     "location": "St. Louis (MO)",
-                    "num_pages": 979 p
+                    "num_pages": "979 p"
                 }},
     {{
                     "full_text": "Calkins BM, Mendeloff AI. The epidemiology of idiopathic inflammatory bowel disease. In: Kirsner JB, Shorter RG, eds. Inflammatory bowel disease, 4th ed. Baltimore: Williams & Wilkins. 1995:31-68.",
@@ -260,7 +260,7 @@ def create_prompt_reference(references):
                     "date": 1995,
                     "source": "Inflammatory bowel disease",
                     "chapter": "The epidemiology of idiopathic inflammatory bowel disease.",
-                    "edition: "4th"
+                    "edition: "4th",
                     "organization": "Williams & Wilkins",
                     "location": "Baltimore",
                     "fpage": 31,
