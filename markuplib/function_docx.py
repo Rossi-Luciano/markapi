@@ -119,8 +119,6 @@ class functionsDocx:
             if r_id and r_id in rels_map:
                 links.append(rels_map[r_id])
 
-        print("*********************************")
-        print(links)
         return ' '.join(links) if links else None
 
 
