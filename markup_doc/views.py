@@ -47,7 +47,7 @@ def generate_xml(request, id_registro):
         response['Content-Disposition'] = f'attachment; filename="{nombre_archivo}"'
        
         return response
-    except TuModelo.DoesNotExist:
+    except ArticleDocxMarkup.DoesNotExist:
         return HttpResponse("El registro solicitado no existe", status=404)
     except Exception as e:
         return HttpResponse(f"Error al generar el XML: {str(e)}", status=500)
