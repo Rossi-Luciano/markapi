@@ -19,7 +19,7 @@ class ReferenceStatus(models.IntegerChoices):
 
 # Create your models here
 class Reference(CommonControlField, ClusterableModel):
-    mixed_citation = models.TextField(("Mixed Citation"), null=False, blank=True)
+    mixed_citation = models.TextField(_("Mixed Citation"), null=False, blank=True)
 
     estatus = models.IntegerField(
         _("Reference estatus"),
@@ -53,7 +53,7 @@ class ElementCitation(Orderable):
             MinValueValidator(1),  # Mínimo 1
             MaxValueValidator(10)  # Máximo 10
         ],
-        help_text="Rating from 1 to 10"
+        help_text=_("Rating from 1 to 10")
     )
 
     panels = [
