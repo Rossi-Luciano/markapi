@@ -27,16 +27,6 @@ RUN apt-get update && \
     update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 50 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Instalar ninja-build y cmake
-RUN apt-get install -y ninja-build cmake
-
-# Configurar variables de entorno para compilar con BLAS y SIMD condicionalmente
-ARG ENABLE_OPTIMIZATIONS=true
-ARG ENABLE_OPTIMIZATIONS=true
-ENV CFLAGS="${ENABLE_OPTIMIZATIONS:+-mfma -mavx2}" \
-    CXXFLAGS="${ENABLE_OPTIMIZATIONS:+-mfma -mavx2}" \
-    CMAKE_ARGS="${ENABLE_OPTIMIZATIONS:+-DGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS}"
-
 # Actualizar pip, setuptools y wheel antes de instalar dependencias
 RUN python -m pip install --upgrade pip setuptools wheel
 
@@ -63,12 +53,6 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV BUILD_ENV ${BUILD_ENVIRONMENT}
 
-# Disable AVX support for llama-cpp-python if needed
-ARG DISABLE_AVX=false
-
-# Set the version of llama-cpp-python
-ARG LLAMA_VERSION=0.3.14
-
 WORKDIR ${APP_HOME}
 
 RUN sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
@@ -89,16 +73,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # copy python dependency wheels from python-build-stage
 COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
 
-# Use wheels to install python dependencies (excluding llama-cpp-python)
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl" ! -name "llama_cpp_python*") \
+# Use wheels to install python dependencies
+RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl") \
 	&& rm -rf /wheels/
-
-# Install llama-cpp-python with specific CMAKE flags for Kubernetes nodes with or without AVX support
-RUN if [ "${DISABLE_AVX}" = "true" ]; then \
-  CMAKE_ARGS='-DLLAMA_AVX=OFF -DLLAMA_AVX2=OFF -DLLAMA_FMA=OFF -DLLAMA_F16C=OFF -DLLAMA_OPENMP=ON' pip install llama-cpp-python==${LLAMA_VERSION} --force-reinstall --no-cache-dir; \
-    else \
-  pip install llama-cpp-python==${LLAMA_VERSION} --force-reinstall --no-cache-dir; \
-    fi
 
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint

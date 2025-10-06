@@ -1,18 +1,11 @@
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-from wagtail_modeladmin.options import (
-    ModelAdmin,
-    ModelAdminGroup,
-    modeladmin_register,
-)
-from wagtail_modeladmin.views import CreateView
-from wagtail.admin.menu import MenuItem
+from wagtail.snippets.models import register_snippet
+from wagtail.snippets.views.snippets import CreateView, SnippetViewSet
 
+from reference.models import Reference
 from reference.tasks import get_reference
 
-from reference.models import ( 
-    Reference
-)
 
 class ReferenceCreateView(CreateView):
     def form_valid(self, form):
@@ -38,18 +31,16 @@ class ReferenceCreateView(CreateView):
         
 
 
-class ReferenceAdmin(ModelAdmin):
+class ReferenceAdmin(SnippetViewSet):
     model = Reference
-    create_view_class = ReferenceCreateView
-    #edit_view_class = ArticleDocxEditView
+    add_view_class = ReferenceCreateView
     menu_label = _("Reference")
     menu_icon = "folder"
     menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
     exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
+        False
     )
     list_per_page = 20
+    add_to_admin_menu = True
 
-
-modeladmin_register(ReferenceAdmin)
+register_snippet(ReferenceAdmin)

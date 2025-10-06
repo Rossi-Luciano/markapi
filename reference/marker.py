@@ -1,14 +1,46 @@
-from llama3.generic_llama import GenericLlama
+import logging
 
+from llama3.generic_llama import (
+    GenericLlama,
+    LlamaDisabledError,
+    LlamaNotInstalledError,
+    LlamaModelNotFoundError,
+)
 from reference.config import MESSAGES, RESPONSE_FORMAT
+from tracker.models import GeneralEvent
 
 
 def mark_reference(reference_text):
-    reference_marker = GenericLlama(MESSAGES, RESPONSE_FORMAT)
-    output = reference_marker.run(reference_text)
-    # output['choices'][0]['message']['content']
-    for item in output["choices"]:
-        yield item["message"]["content"]
+    try:
+        reference_marker = GenericLlama(MESSAGES, RESPONSE_FORMAT)
+        output = reference_marker.run(reference_text)
+        for item in output.get("choices", []):
+            yield item.get("message", {}).get("content", "")
+
+    except (LlamaDisabledError, LlamaNotInstalledError, LlamaModelNotFoundError) as e:
+        logging.error(f"Error marking reference: {e}")
+        GeneralEvent.create(
+            exception=e,
+            exc_traceback=None,
+            item=None,
+            action="mark_reference",
+            detail={"reference_text": reference_text}
+        )
+        if isinstance(e, LlamaModelNotFoundError):
+            yield f"Llama model file not found: {str(e)}"
+        else:
+            yield f"Llama model is not available: {str(e)}"
+
+    except Exception as e:
+        logging.error(f"Unexpected error marking reference: {e}")
+        GeneralEvent.create(
+            exception=e,
+            exc_traceback=None,
+            item=None,
+            action="mark_reference",
+            detail={"reference_text": reference_text}
+        )
+        yield f"An unexpected error occurred: {str(e)}"
 
 
 def mark_references(reference_block):

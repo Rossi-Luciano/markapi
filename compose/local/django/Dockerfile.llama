@@ -1,20 +1,40 @@
 ARG PYTHON_VERSION=3.11-bullseye
 
 # define an alias for the specfic python version used in this file.
-FROM python:${PYTHON_VERSION} as python
+FROM python:${PYTHON_VERSION} AS python
 
 # Python build stage
-FROM python as python-build-stage
+FROM python AS python-build-stage
 
-ARG BUILD_ENVIRONMENT=production
+ARG BUILD_ENVIRONMENT=local
 
 # Install apt packages
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
-  git \
   build-essential \
+  git \
   # psycopg2 dependencies
-  libpq-dev
+  libpq-dev \
+  # other dependencies
+  software-properties-common \
+  libopenblas-dev \
+  libomp-dev
+
+# Instalar gcc-10 y g++-10 en Debian Bullseye
+RUN apt-get update && \
+    apt-get install -y gcc-10 g++-10 ninja-build cmake && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 50 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 50 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configurar variables de entorno para compilar con BLAS y SIMD condicionalmente
+ARG ENABLE_OPTIMIZATIONS=true
+ENV CFLAGS="${ENABLE_OPTIMIZATIONS:+-mfma -mavx2}" \
+    CXXFLAGS="${ENABLE_OPTIMIZATIONS:+-mfma -mavx2}" \
+    CMAKE_ARGS="${ENABLE_OPTIMIZATIONS:+-DGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS}"
+
+# Actualizar pip, setuptools y wheel antes de instalar dependencias
+RUN python -m pip install --upgrade pip setuptools wheel
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements .
@@ -27,12 +47,13 @@ RUN python -m pip install --upgrade pip
 
 # Create Python Dependency and Sub-Dependency Wheels.
 RUN pip wheel --wheel-dir /usr/src/app/wheels  \
-  -r ${BUILD_ENVIRONMENT}.txt
+  -r ${BUILD_ENVIRONMENT}.txt \
+  -r extra-llama.txt
 
 # Python 'run' stage
-FROM python as python-run-stage
+FROM python AS python-run-stage
 
-ARG BUILD_ENVIRONMENT=production
+ARG BUILD_ENVIRONMENT=local
 ARG APP_HOME=/app
 
 ENV PYTHONUNBUFFERED 1
@@ -41,19 +62,16 @@ ENV BUILD_ENV ${BUILD_ENVIRONMENT}
 
 WORKDIR ${APP_HOME}
 
-RUN addgroup --system django \
-    && adduser --system --ingroup django django
-
 RUN sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
-    
+
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
   libpq-dev \
-  # libreoffice for document conversions
-  default-jre libreoffice libreoffice-java-common ttf-mscorefonts-installer fonts-liberation fonts-liberation2 fonts-crosextra-carlito fonts-crosextra-caladea fonts-dejavu fonts-noto \
   # Translations dependencies
   gettext \
+  # libreoffice for document conversions
+  default-jre libreoffice libreoffice-java-common ttf-mscorefonts-installer fonts-liberation fonts-liberation2 fonts-crosextra-carlito fonts-crosextra-caladea fonts-dejavu fonts-noto \
   # cleaning up unused files
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
   && rm -rf /var/lib/apt/lists/*
@@ -62,35 +80,31 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
 # copy python dependency wheels from python-build-stage
 COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
 
-# use wheels to install python dependencies
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl") && rm -rf /wheels/
+# Use wheels to install python dependencies
+RUN pip install --no-cache-dir --no-index --find-links=/wheels/ $(find /wheels/ -name "*.whl") \
+	&& rm -rf /wheels/
 
-COPY --chown=django:django ./compose/production/django/entrypoint /entrypoint
+COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint
 
-COPY --chown=django:django ./compose/production/django/start /start
+COPY ./compose/local/django/start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 
-COPY --chown=django:django ./compose/production/django/celery/worker/start /start-celeryworker
+COPY ./compose/local/django/celery/worker/start /start-celeryworker
 RUN sed -i 's/\r$//g' /start-celeryworker
 RUN chmod +x /start-celeryworker
 
-COPY --chown=django:django ./compose/production/django/celery/beat/start /start-celerybeat
+COPY ./compose/local/django/celery/beat/start /start-celerybeat
 RUN sed -i 's/\r$//g' /start-celerybeat
 RUN chmod +x /start-celerybeat
 
-COPY ./compose/production/django/celery/flower/start /start-flower
+COPY ./compose/local/django/celery/flower/start /start-flower
 RUN sed -i 's/\r$//g' /start-flower
 RUN chmod +x /start-flower
 
 # copy application code to WORKDIR
-COPY --chown=django:django . ${APP_HOME}
-
-# make django owner of the WORKDIR directory as well.
-RUN chown django:django ${APP_HOME}
-
-USER django
+COPY . ${APP_HOME}
 
 ENTRYPOINT ["/entrypoint"]

@@ -10,7 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from core.forms import CoreAdminModelForm
 
-# Create your models here
+
 class Reference(CommonControlField, ClusterableModel):
     mixed_citation = models.TextField(_("Mixed Citation"), null=False, blank=True)
 
@@ -18,7 +18,7 @@ class Reference(CommonControlField, ClusterableModel):
 
     panels = [
         FieldPanel('mixed_citation'),
-        InlinePanel('element_citation')
+        InlinePanel('element_citation', label=_("Cited Elements"))
     ]
 
     base_form_class = CoreAdminModelForm
