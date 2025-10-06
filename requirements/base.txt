@@ -37,7 +37,7 @@ tenacity==8.2.3  # https://pypi.org/project/tenacity/
 
 # Packtools
 # ------------------------------------------------------------------------------
-git+https://git@github.com/scieloorg/packtools@4.12.0#egg=packtools
+git+https://git@github.com/scieloorg/packtools@4.12.6#egg=packtools
 
 # Langdetect
 # ------------------------------------------------------------------------------
