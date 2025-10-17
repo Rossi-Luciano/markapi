@@ -21,8 +21,8 @@ class ReferenceStatus(models.IntegerChoices):
 class Reference(CommonControlField, ClusterableModel):
     mixed_citation = models.TextField(_("Mixed Citation"), null=False, blank=True)
 
-    estatus = models.IntegerField(
-        _("Reference estatus"),
+    status = models.IntegerField(
+        _("Reference status"),
         choices=ReferenceStatus.choices,
         blank=True,
         default=ReferenceStatus.NO_REFERENCE
