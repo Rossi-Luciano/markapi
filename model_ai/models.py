@@ -36,7 +36,7 @@ class LlamaModel(CommonControlField):
     name_file = models.CharField(_("Model file"), blank=True, max_length=255)
     hf_token = models.CharField(_("Hugging Face token"), blank=True, max_length=255)
     download_status = models.IntegerField(
-        _("Local model estatus"),
+        _("Local model status"),
         choices=DownloadStatus.choices,
         blank=True,
         default=DownloadStatus.NO_MODEL
@@ -70,6 +70,11 @@ class LlamaModel(CommonControlField):
     def clean(self):
         if not self.pk and LlamaModel.objects.exists():
             raise ValidationError(_("Only one instance of LlamaModel is allowed."))
+    
+    def save(self, *args, **kwargs):
+        if not self.pk and LlamaModel.objects.exists():
+            raise ValidationError(_("Only one instance of LlamaModel is allowed."))
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name_model
