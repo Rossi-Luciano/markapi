@@ -5,7 +5,6 @@ from wagtail_modeladmin.options import (
     ModelAdminGroup,
     modeladmin_register,
 )
-from wagtail_modeladmin.views import CreateView
 from wagtail.admin.menu import MenuItem
 
 from reference.data_utils import get_reference
