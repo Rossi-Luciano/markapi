@@ -14,14 +14,18 @@ from model_ai.models import LlamaModel
 from .choices import order_labels
 
 
+MODEL_NAME_GEMINI = 'GEMINI'
+MODEL_NAME_LLAMA = 'LLAMA'
 
-def getLLM():
+
+def get_llm_model_name():
+    # FIXME: This function always fetches the first LlamaModel instance.
     model_ai = LlamaModel.objects.first()
 
     if model_ai.api_key_gemini:
-        return 'GEMINI'
+        return MODEL_NAME_GEMINI
     else:
-        return 'LLAMA'
+        return MODEL_NAME_LLAMA
     
 
 def split_in_three(obj_reference, chunk_size=15):

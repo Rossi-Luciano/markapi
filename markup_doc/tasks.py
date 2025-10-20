@@ -17,13 +17,15 @@ from markup_doc.labeling_utils import (
     extract_keywords,
     create_labeled_object2,
     get_data_first_block,
-    getLLM
+    get_llm_model_name
 )
 from markup_doc.models import ProcessStatus
+from markup_doc.labeling_utils import MODEL_NAME_GEMINI, MODEL_NAME_LLAMA
 from markup_doc.sync_api import sync_journals_from_api
 from markuplib.function_docx import functionsDocx
 from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
+
 
 
 def clean_labels(text):
@@ -151,16 +153,16 @@ def get_labels(title, user_id):
             continue
 
         if item.get('type') == 'first_block':
-            first_block = LlamaService(mode='prompt', temperature=0.1)
+            llm_first_block = LlamaService(mode='prompt', temperature=0.1)
 
-            if getLLM() == 'GEMINI':
-                output = first_block.run(LlamaInputSettings.get_first_metadata(clean_labels(item.get('text'))))
+            if get_llm_model_name() == MODEL_NAME_GEMINI:
+                output = llm_first_block.run(LlamaInputSettings.get_first_metadata(clean_labels(item.get('text'))))
                 match = re.search(r'\{.*\}', output, re.DOTALL)
                 if match:
                     output = match.group(0)
                     output = json.loads(output)
-            
-            if getLLM() == 'LLAMA':
+
+            if get_llm_model_name() == MODEL_NAME_LLAMA:
 
                 output_author = get_data_first_block(clean_labels(item.get('text')), 'author', user_id)
                 
@@ -283,7 +285,7 @@ def get_labels(title, user_id):
     
     num_refs = [item["num_ref"] for item in obj_reference]
 
-    if getLLM() == 'LLAMA':
+    if get_llm_model_name() == 'LLAMA':
         for obj_ref in obj_reference:
             obj = process_reference(obj_ref['num_ref'], obj_ref['obj'], user_id)
             stream_data_back.append(obj)
@@ -297,7 +299,7 @@ def get_labels(title, user_id):
                 text_references = "\n".join([item["text"] for item in chunk]).replace('<italic>', '').replace('</italic>', '')
                 prompt_reference = create_prompt_reference(text_references)
 
-                result = first_block.run(prompt_reference) 
+                result = llm_first_block.run(prompt_reference) 
 
                 match = re.search(r'\[.*\]', result, re.DOTALL)
                 if match:
