@@ -92,29 +92,17 @@ class LlamaModelViewSet(SnippetViewSet):
     model = LlamaModel
     add_view_class = LlamaModelCreateView
     edit_view_class = LlamaModelEditView
-    menu_label = _("Llama Model")
+    menu_label = _("AI LLM Model")
     menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
+    menu_order = 100
     exclude_from_explorer = (
         False  # or True to exclude pages of this type from Wagtail's explorer view
     )
+    add_to_admin_menu = True
     list_per_page = 20
     list_display = (
         "display_name_model",
         "get_download_status_display"
     )
-
-"""
-class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = 'markup_docx'
-    menu_label = _('Markup Docx')
-    menu_icon = "folder-open-inverse"
-    menu_order = get_menu_order('markup_docx')
-    items = (
-        UploadDocxViewSet,
-        MarkupXMLViewSet,
-    )
-"""
 
 register_snippet(LlamaModelViewSet)
