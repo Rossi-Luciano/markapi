@@ -354,6 +354,68 @@ AFFILIATION_RESPONSE_FORMAT = {
         }
     }
 
+REFERENCE_MESSAGES = [
+    {   'role': 'system',
+        'content': 'You are an assistant who distinguishes the metadata of a bibliographic reference and returns it in JSON format.'
+    },
+    {   'role': 'user',
+        'content': """
+                        Smith, J. (2020). Understanding AI. Journal of Technology, 15(3), 45-60. https://doi.org/10.1234/jtech.2020.015
+                   """
+    },
+    {   'role': 'assistant',
+        'content': json.dumps({
+                'authors': [
+                                {
+                                    "name": "J.",
+                                    "surname": "Smith",
+                                    "orcid": "",
+                                    "aff": "",
+                                    "char": ""
+                                }
+                            ],
+                'title': "Understanding AI",
+                'journal': "Journal of Technology",
+                'year': "2020",
+                'volume': "15",
+                'issue': "3",
+                'pages': "45-60",
+                'doi': "10.1234/jtech.2020.015"
+        })
+    },
+]
+
+REFERENCE_RESPONSE_FORMAT = {
+    'type': 'json_object',
+    'schema':{
+        'type': 'object',
+        'properties': {
+            'authors': {'type': 'array',
+                        'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'name': {'type': 'string'},
+                                        'surname': {'type': 'string'},
+                                        'orcid': {'type': 'string'},
+                                        'aff': {'type': 'string'},
+                                        'char': {'type': 'string'}
+                                    },
+                                    'required': ['name', 'surname', 'orcid', 'aff', 'char']
+                            }
+                        },
+            'title': {'type': 'string'},
+            'journal': {'type': 'string'},
+            'year': {'type': 'string'},
+            'volume': {'type': 'string'},
+            'issue': {'type': 'string'},
+            'pages': {'type': 'string'},
+            'doi': {'type': 'string'}
+        },
+        'required':['authors', 'title', 'journal', 'year', 'volume', 'issue', 'pages', 'doi']
+    }
+}
+
+
 ALL_FIRST_BLOCK = """
     ### Instruction:
     From the provided Text, extract the specified metadata as shown in the Example.
