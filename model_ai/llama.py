@@ -24,7 +24,7 @@ class LlamaService:
   # Singleton pattern to cache the LLaMA model instance
   _cached_llm = None
 
-  def __init__(self, messages, response_format, max_tokens=4000, temperature=0.1, top_p=0.1, mode='chat', nthreads=2):
+  def __init__(self, messages=None, response_format=None, max_tokens=4000, temperature=0.1, top_p=0.1, mode='chat', nthreads=2):
     self.messages = messages
     self.response_format = response_format
     self.max_tokens = max_tokens
