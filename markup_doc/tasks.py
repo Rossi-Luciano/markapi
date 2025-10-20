@@ -151,10 +151,10 @@ def get_labels(title, user_id):
             continue
 
         if item.get('type') == 'first_block':
-            first_block = GenericLlama(type='prompt', temperature=0.1)
+            first_block = LlamaService(type='prompt', temperature=0.1)
 
             if getLLM() == 'GEMINI':
-                output = first_block.run(functionsLlama.getFirstMetadata(clean_labels(item.get('text'))))
+                output = first_block.run(LlamaInputSettings.get_first_metadata(clean_labels(item.get('text'))))
                 match = re.search(r'\{.*\}', output, re.DOTALL)
                 if match:
                     output = match.group(0)
