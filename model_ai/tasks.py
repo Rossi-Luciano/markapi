@@ -1,9 +1,12 @@
+# Standard library imports
 from config import celery_app
-from model_ai.models import LlamaModel, DownloadStatus
 from config.settings.base import LLAMA_MODEL_DIR
 
-from huggingface_hub import login
-from huggingface_hub import hf_hub_download
+# Third party imports
+from huggingface_hub import login, hf_hub_download
+
+# Local application imports
+from model_ai.models import LlamaModel, DownloadStatus
 
 
 def get_model(hf_token, name_model, name_file):
