@@ -1,0 +1,89 @@
+# MarkAPI - Docker Compose Simplificado
+# Baseado no local.yml do markapi
+
+services:
+  django:
+    build:
+      context: ../../
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: markapi_django
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ../../:/app:z
+    environment:
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
+    ports:
+      - "8000:8000"
+    command: /start
+    restart: unless-stopped
+
+  postgres:
+    build:
+      context: ../../
+      dockerfile: ./compose/local/postgres/Dockerfile
+    container_name: markapi_postgres
+    volumes:
+      - local_postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+    restart: unless-stopped
+
+  redis:
+    image: redis:6
+    container_name: markapi_redis
+    restart: unless-stopped
+
+  celeryworker:
+    build:
+      context: ../../
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: markapi_celeryworker
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ../../:/app:z
+    environment:
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
+    command: /start-celeryworker
+    restart: unless-stopped
+
+  celerybeat:
+    build:
+      context: ../../
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: markapi_celerybeat
+    depends_on:
+      - redis
+      - postgres
+    volumes:
+      - ../../:/app:z
+    environment:
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
+    command: /start-celerybeat
+    restart: unless-stopped
+
+  flower:
+    build:
+      context: ../../
+      dockerfile: ./compose/local/django/Dockerfile
+    container_name: markapi_flower
+    depends_on:
+      - redis
+    volumes:
+      - ../../:/app:z
+    environment:
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
+    ports:
+      - "5555:5555"
+    command: /start-flower
+    restart: unless-stopped
+
+volumes:
+  local_postgres_data:
