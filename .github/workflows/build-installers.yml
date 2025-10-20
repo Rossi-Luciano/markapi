@@ -1,13 +1,14 @@
+---
 name: Build MarkAPI Installers
 
-on:
+"on":
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
     paths:
       - 'distribution/**'
       - '.github/workflows/build-installers.yml'
   pull_request:
-    branches: [ main ]
+    branches: [main]
     paths:
       - 'distribution/**'
   workflow_dispatch:
@@ -29,19 +30,25 @@ jobs:
 
       - name: Install Inno Setup
         run: |
-          Invoke-WebRequest -Uri "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe" -OutFile "innosetup.exe"
-          Start-Process -FilePath "innosetup.exe" -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+          $url = "https://files.jrsoftware.org/is/6/innosetup-6.2.2.exe"
+          Invoke-WebRequest -Uri $url -OutFile "innosetup.exe"
+          Start-Process -FilePath "innosetup.exe" `
+            -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" `
+            -Wait
 
       - name: Update version in setup script
         run: |
           $content = Get-Content "distribution/windows/setup.iss"
-          $content = $content -replace '#define MyAppVersion ".*"', "#define MyAppVersion `"$env:APP_VERSION`""
+          $pattern = '#define MyAppVersion ".*"'
+          $replacement = "#define MyAppVersion `"$env:APP_VERSION`""
+          $content = $content -replace $pattern, $replacement
           Set-Content "distribution/windows/setup.iss" $content
         shell: powershell
 
       - name: Build Windows installer
         run: |
-          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" "distribution/windows/setup.iss"
+          $inno = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          & $inno "distribution/windows/setup.iss"
         shell: powershell
 
       - name: Upload Windows installer
@@ -121,41 +128,14 @@ jobs:
             markapi-universal-package/*
           body: |
             # MarkAPI v${{ env.APP_VERSION }}
-            
-            ## 📦 Downloads Disponíveis
-            
-            ### Windows
-            - **MarkAPI-Setup-${{ env.APP_VERSION }}.exe**: Instalador completo para Windows 10+
-            
-            ### Linux  
-            - **markapi_${{ env.APP_VERSION }}_amd64.deb**: Pacote para Ubuntu/Debian
-            - **MarkAPI-${{ env.APP_VERSION }}.AppImage**: Universal Linux (64-bit)
-            
-            ### Universal
-            - **markapi-universal-${{ env.APP_VERSION }}.tar.gz**: Para qualquer sistema com Docker
-            
-            ## 🚀 Como Instalar
-            
-            ### Windows
-            1. Baixe `MarkAPI-Setup-${{ env.APP_VERSION }}.exe`
-            2. Execute como Administrador
-            3. Use o atalho "MarkAPI" para iniciar
-            
-            ### Ubuntu/Debian
-            ```bash
-            sudo dpkg -i markapi_${{ env.APP_VERSION }}_amd64.deb
-            markapi start
-            ```
-            
-            ### Linux Universal (AppImage)
-            ```bash
-            chmod +x MarkAPI-${{ env.APP_VERSION }}.AppImage
-            ./MarkAPI-${{ env.APP_VERSION }}.AppImage
-            ```
-            
-            ## 📋 Requisitos
-            
-            - **Windows**: 10+ (64-bit), 8GB RAM, Docker Desktop
-            - **Linux**: Docker, 8GB RAM, kernel 4.0+
+
+            Instaladores automatizados para Windows, Linux e Universal.
+
+            ## Downloads
+
+            - Windows: MarkAPI-Setup-${{ env.APP_VERSION }}.exe
+            - Ubuntu/Debian: markapi_${{ env.APP_VERSION }}_amd64.deb
+            - Linux Universal: MarkAPI-${{ env.APP_VERSION }}.AppImage
+            - Universal: markapi-universal-${{ env.APP_VERSION }}.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
