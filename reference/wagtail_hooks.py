@@ -1,17 +1,16 @@
+# Third-party imports
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from wagtail.snippets.models import register_snippet
-
-from reference.models import Reference
-from reference.tasks import get_reference
-
 from wagtail.snippets.views.snippets import (
     CreateView,
-    EditView,
     SnippetViewSet,
-    SnippetViewSetGroup
 )
-from model_ai.tasks import download_model
+
+# Local application imports
+from reference.data_utils import get_reference
+from reference.models import Reference
+
 
 class ReferenceCreateView(CreateView):
     def form_valid(self, form):

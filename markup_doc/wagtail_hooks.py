@@ -2,11 +2,7 @@ from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
 from django.template.response import TemplateResponse
-from wagtail_modeladmin.options import (
-    ModelAdmin,
-    ModelAdminGroup,
-    modeladmin_register,
-)
+from wagtail_modeladmin.options import ModelAdmin
 
 from wagtail.snippets.views.snippets import (
     CreateView,
@@ -14,7 +10,6 @@ from wagtail.snippets.views.snippets import (
     SnippetViewSet,
     SnippetViewSetGroup
 )
-#from wagtail.contrib.modeladmin.views import CreateView, EditView
 
 from markup_doc.models import ( 
     ArticleDocx,

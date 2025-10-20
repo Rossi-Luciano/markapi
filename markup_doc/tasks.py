@@ -1,9 +1,13 @@
+# Standard library imports
+import json
+import re
+
+# Third-party imports
+import langid
+
+# Local application imports
 from config import celery_app
-from django.core.files.base import ContentFile
-from markup_doc.models import UploadDocx, MarkupXML #ArticleDocx, ArticleDocxMarkup
-import re, json, langid, math
-from markuplib.function_docx import functionsDocx
-from packtools.sps.formats.sps_xml.contrib import build_contrib_author
+from markup_doc.models import UploadDocx, MarkupXML
 from markup_doc.xml import get_xml
 from markup_doc.labeling_utils import (
     split_in_three,
@@ -15,13 +19,12 @@ from markup_doc.labeling_utils import (
     get_data_first_block,
     getLLM
 )
-from markup_doc.models import(
-    ProcessStatus
-)
+from markup_doc.models import ProcessStatus
 from markup_doc.sync_api import sync_journals_from_api
-from model_ai.generic_llama import GenericLlama
-from model_ai.function_llama import functionsLlama
+from markuplib.function_docx import functionsDocx
+from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
+
 
 def clean_labels(text):
     # Eliminar etiquetas tipo [kwd] o [sectitle], incluso si tienen espacios como [/ doctitle ]

@@ -1,3 +1,4 @@
+# Third party imports
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from django.contrib import messages
@@ -6,15 +7,15 @@ from wagtail.snippets.views.snippets import (
     CreateView,
     EditView,
     SnippetViewSet,
-    SnippetViewSetGroup
 )
 
+from wagtail.snippets.models import register_snippet
+
+# Local application imports
 from model_ai.models import ( 
     LlamaModel,
     DownloadStatus,
 )
-
-from wagtail.snippets.models import register_snippet
 from model_ai.tasks import download_model
 
 

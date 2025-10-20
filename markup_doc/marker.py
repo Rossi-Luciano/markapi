@@ -1,7 +1,8 @@
-from model_ai.generic_llama import GenericLlama
-from model_ai.function_llama import functionsLlama
-
+# Standard library imports
 import re
+
+# Local application imports
+from model_ai.llama import LlamaService, LlamaInputSettings
 
 
 def mark_article(text, metadata):
