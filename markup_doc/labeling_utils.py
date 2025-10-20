@@ -1,10 +1,18 @@
-import requests
+# Standard library imports
 import json
 import re
+import requests
+
 from lxml import etree
-from .choices import order_labels
+
+# Third-party imports
+from django.contrib.auth import get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
+
+# Local application imports
 from model_ai.models import LlamaModel
+from .choices import order_labels
+
 
 
 def getLLM():
@@ -141,8 +149,6 @@ def create_special_content_object(item, stream_data_body, counts):
 
     return obj, counts
 
-
-from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
