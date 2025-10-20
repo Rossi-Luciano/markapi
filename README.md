@@ -34,6 +34,7 @@ Targets:
     vcs_ref                             Show last commit ref
     build_date                          Show build date
     build                               Build app using $(COMPOSE_FILE_DEV)
+    build_llama                         Build app using llama.local.yml
     up                                  Start app using $(COMPOSE_FILE_DEV)
     logs                                Show logs using $(COMPOSE_FILE_DEV)
     stop                                Stop app using $(COMPOSE_FILE_DEV)
@@ -58,12 +59,17 @@ Targets:
 
 ### Common Commands
 
-Build the development environment:
+Build the development environment without Llama support:
 
 ```bash
 make build compose=local.yml
 # or simply
 make
+```
+
+Build the development environment with Llama support:
+```bash
+make build compose=llama.local.yml
 ```
 
 Start the project:
