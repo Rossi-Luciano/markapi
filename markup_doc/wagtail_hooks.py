@@ -124,10 +124,8 @@ class ArticleDocxMarkupAdmin(ModelAdmin):
     list_per_page = 20
 
 
-#class UploadDocxAdmin(ModelAdmin):
 class UploadDocxViewSet(SnippetViewSet):
     model = UploadDocx
-    #create_view_class = ArticleDocxCreateView
     add_view_class = ArticleDocxCreateView
     menu_label = _("UploadDocx")
     menu_icon = "folder"
@@ -143,10 +141,8 @@ class UploadDocxViewSet(SnippetViewSet):
     )
 
 
-#class MarkupXMLAdmin(ModelAdmin):
 class MarkupXMLViewSet(SnippetViewSet):
     model = MarkupXML
-    #create_view_class = ArticleDocxMarkupCreateView
     add_view_class = ArticleDocxMarkupCreateView
     edit_view_class = ArticleDocxEditView
     menu_label = _("MarkupXML")
@@ -158,8 +154,6 @@ class MarkupXMLViewSet(SnippetViewSet):
     )
     
     list_display=("title", )
-
-
     list_per_page = 20
 
 """

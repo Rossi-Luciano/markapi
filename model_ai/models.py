@@ -31,7 +31,6 @@ class DisabledSelect(forms.Select):
 
 
 class LlamaModel(CommonControlField):
-    #is_local = models.BooleanField(_("Use local model"), default=False)
     name_model = models.CharField(_("Hugging Face model name"), blank=True, max_length=255)
     name_file = models.CharField(_("Model file"), blank=True, max_length=255)
     hf_token = models.CharField(_("Hugging Face token"), blank=True, max_length=255)
@@ -47,18 +46,14 @@ class LlamaModel(CommonControlField):
         null=True,
         help_text="Enter the AI API URL."
     )
-    #is_gemini = models.BooleanField(_("Use API Gemini"), default=False)
     api_key_gemini = models.CharField(_("API KEY Gemini"), blank=True, max_length=255)
 
-
     panels = [
-        #FieldPanel("is_local"),
         FieldPanel("name_model"),
         FieldPanel("name_file"),
         FieldPanel("hf_token", widget=MaskedPasswordWidget()),
         FieldPanel("download_status", widget=DisabledSelect(choices=DownloadStatus.choices)),
         FieldPanel("api_url"),
-        #FieldPanel("is_gemini"),
         FieldPanel("api_key_gemini", widget=MaskedPasswordWidget()),
     ]
 
