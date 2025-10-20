@@ -151,7 +151,7 @@ def get_labels(title, user_id):
             continue
 
         if item.get('type') == 'first_block':
-            first_block = LlamaService(type='prompt', temperature=0.1)
+            first_block = LlamaService(mode='prompt', temperature=0.1)
 
             if getLLM() == 'GEMINI':
                 output = first_block.run(LlamaInputSettings.get_first_metadata(clean_labels(item.get('text'))))
