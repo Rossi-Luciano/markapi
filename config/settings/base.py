@@ -24,6 +24,7 @@ BASE_DIR = os.path.dirname(PROJECT_DIR)
 ROOT_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
 # core/
 APPS_DIR = ROOT_DIR / "core"
+LLAMA_MODEL_DIR = ROOT_DIR / "model_ai/download"
 
 env = environ.Env()
 READ_DOT_ENV_FILE = env.bool("DJANGO_READ_DOT_ENV_FILE", default=False)
@@ -80,6 +81,9 @@ LOCAL_APPS = [
     "tracker",
     "reference",
     "xml_manager",
+    "markup_doc",
+    "markuplib",
+    "model_ai"
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + WAGTAIL
@@ -296,5 +300,7 @@ SIMPLE_JWT = {
 
 # LLAMA
 LLAMA_ENABLED = env.bool("LLAMA_ENABLED", default=False)
-LLAMA_MODEL_DIR = ROOT_DIR / "llama3/llama-3.2"
 MODEL_LLAMA = "llama-3.2-3b-instruct-q4_k_m.gguf"
+
+#Aumento en el límite de campos
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000

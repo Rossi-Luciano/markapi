@@ -1,6 +1,6 @@
 from config import celery_app
 from reference.marker import mark_references
-from reference.models import Reference, ElementCitation
+from reference.models import Reference, ElementCitation, ReferenceStatus
 import json
 from lxml import etree
 import re
@@ -116,5 +116,5 @@ def get_reference(obj_id):
                marked=i,
                marked_xml=etree.tostring(get_xml(i), pretty_print=True, encoding='unicode')
            )
-   obj_reference.estatus = 2
+   obj_reference.estatus = ReferenceStatus.READY
    obj_reference.save()

@@ -11,10 +11,22 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from core.forms import CoreAdminModelForm
 
 
+class ReferenceStatus(models.IntegerChoices):
+    NO_REFERENCE = 0, _("No reference")
+    CREATING = 1, _("Creating reference")
+    READY = 2, _("Reference ready")
+
+
+
 class Reference(CommonControlField, ClusterableModel):
     mixed_citation = models.TextField(_("Mixed Citation"), null=False, blank=True)
 
-    estatus = models.IntegerField(default=0) 
+    status = models.IntegerField(
+        _("Reference status"),
+        choices=ReferenceStatus.choices,
+        blank=True,
+        default=ReferenceStatus.NO_REFERENCE
+    )
 
     panels = [
         FieldPanel('mixed_citation'),
@@ -25,10 +37,6 @@ class Reference(CommonControlField, ClusterableModel):
 
     def __str__(self):
         return self.mixed_citation
-
-    class Meta:
-        verbose_name = _("Referência")
-        verbose_name_plural = _("Referências")
 
 
 class ElementCitation(Orderable):

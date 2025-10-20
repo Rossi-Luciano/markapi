@@ -42,3 +42,12 @@ git+https://git@github.com/scieloorg/packtools@4.12.6#egg=packtools
 # Langdetect
 # ------------------------------------------------------------------------------
 langdetect~=1.0.9
+langid
+
+# Gemini
+#
+google-generativeai==0.3.2
+
+# Docx
+#
+python-docx==1.1.2

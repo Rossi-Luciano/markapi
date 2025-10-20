@@ -1,6 +1,6 @@
 import logging
 
-from llama3.generic_llama import (
+from model_ai.generic_llama import (
     GenericLlama,
     LlamaDisabledError,
     LlamaNotInstalledError,

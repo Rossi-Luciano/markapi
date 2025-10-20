@@ -6,11 +6,11 @@ from rest_framework.mixins import CreateModelMixin
 from rest_framework.response import Response
 from reference.api.v1.serializers import ReferenceSerializer
 from reference.marker import mark_references
-from reference.tasks import get_reference
+from reference.data_utils import get_reference
 
 import json
 
-from reference.models import Reference, ElementCitation
+from reference.models import Reference, ElementCitation, ReferenceStatus
 
 # Create your views here.
 
@@ -19,7 +19,7 @@ class ReferenceViewSet(
     CreateModelMixin,  # handles POSTs
 ):
     serializer_class = ReferenceSerializer
-    permission_classes = [IsAuthenticated] 
+    permission_classes = [IsAuthenticated]
     http_method_names = [
         "post",
     ]
@@ -40,7 +40,7 @@ class ReferenceViewSet(
             except Reference.DoesNotExist:
                 new_reference = Reference.objects.create(
                     mixed_citation=post_reference,
-                    estatus=1,
+                    estatus=ReferenceStatus.CREATING,
                     creator=self.request.user,
                 )
 
