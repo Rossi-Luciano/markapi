@@ -7,15 +7,15 @@ from model_ai.llama import LlamaService, LlamaInputSettings
 
 def mark_article(text, metadata):
     if metadata == 'author':
-        messages, response_format = functionsLlama.getAuthorConfig()
+        messages, response_format = LlamaInputSettings.get_author_config()
     if metadata == 'affiliation':
-        messages, response_format = functionsLlama.getAffiliations()
+        messages, response_format = LlamaInputSettings.get_affiliations()
     if metadata == 'doi':
-        messages, response_format = functionsLlama.getDoiAndSection()
+        messages, response_format = LlamaInputSettings.get_doi_and_section()
     if metadata == 'title':
-        messages, response_format = functionsLlama.getTitles()
+        messages, response_format = LlamaInputSettings.get_titles()
 
-    gll = GenericLlama(messages, response_format)
+    gll = LlamaService(messages, response_format)
     output = gll.run(text)
     output = output['choices'][0]['message']['content']
     if metadata == 'doi':
@@ -26,6 +26,15 @@ def mark_article(text, metadata):
         output = output.group(0)
     return output
 
+def mark_reference(reference_text):
+    messages, response_format = LlamaInputSettings.get_messages_and_response_format_for_reference(reference_text)
+    reference_marker = LlamaService(messages, response_format)
+    output = reference_marker.run(reference_text)
+
+    for item in output["choices"]:
+        yield item["message"]["content"]
+
+
 def mark_references(reference_block):
     for ref_row in reference_block.split("\n"):
         ref_row = ref_row.strip()
@@ -35,4 +44,3 @@ def mark_references(reference_block):
                 "reference": ref_row,
                 "choices": list(choices)
             }
-
