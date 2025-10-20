@@ -88,6 +88,7 @@ class LlamaService:
       genai.configure(api_key=model_ai.api_key_gemini)
 
       # Fetch the Gemini model
+      # FIXME: Hardcoded model name
       model = genai.GenerativeModel('models/gemini-2.0-flash')
 
       # Generate content using Gemini

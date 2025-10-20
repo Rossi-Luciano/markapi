@@ -152,6 +152,7 @@ def process_reference(num_ref, obj, user_id):
         'reference': obj['value']['paragraph']
     }
 
+    # FIXME: This function always fetches the first LlamaModel instance.
     model = LlamaModel.objects.first()
 
     if model.name_file:
@@ -161,6 +162,8 @@ def process_reference(num_ref, obj, user_id):
 
         #url = "http://172.17.0.1:8400/api/v1/mix_citation/reference/"
         #url = "http://172.17.0.1:8009/api/v1/mix_citation/reference/"
+
+        # FIXME: Hardcoded URL
         url = "http://django:8000/api/v1/reference/"    
 
     headers = {
@@ -278,6 +281,7 @@ def get_data_first_block(text, metadata, user_id):
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
 
+        # FIXME: Hardcoded URL
         url = "http://django:8000/api/v1/first_block/"    
 
     headers = {
@@ -1121,5 +1125,3 @@ def append_fragment(node_dest, val):
     # 5) Mover cada hijo al destino (sus .tail se conservan)
     for child in list(wrapper):
         node_dest.append(child)
-
-        
