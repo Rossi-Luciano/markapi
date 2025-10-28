@@ -1,3 +1,4 @@
+from celery import shared_task
 from config import celery_app
 from reference.marker import mark_references
 from reference.models import Reference, ElementCitation, ReferenceStatus
@@ -22,7 +23,13 @@ def get_number_of_month(texto):
     return None  # Si no encuentra un mes
 
 def get_xml(json_reference):
-    json_reference = json.loads(json_reference)
+    try:
+        json_reference = json.loads(json_reference)
+    except json.JSONDecodeError as e:
+        print(f"JSON malformado da IA: {e}")
+        print(f"JSON recebido: {json_reference[:500]}...")
+        # Retornar estrutura básica
+        return etree.Element("error")
     root = etree.Element('element-citation',
                            attrib = {
                                'publication-type': json_reference['reftype'],
@@ -105,10 +112,11 @@ def get_xml(json_reference):
     return root
   
 
-#@celery_app.task()
+@shared_task
 def get_reference(obj_id):
    obj_reference = Reference.objects.get(id=obj_id)
-   marked = mark_references(obj_reference.mixed_citation)
+   marked = list(mark_references(obj_reference.mixed_citation))
+
    for item in marked:
        for i in item['choices']:
            ElementCitation.objects.create(
@@ -116,5 +124,5 @@ def get_reference(obj_id):
                marked=i,
                marked_xml=etree.tostring(get_xml(i), pretty_print=True, encoding='unicode')
            )
-   obj_reference.estatus = ReferenceStatus.READY
+   obj_reference.status = ReferenceStatus.READY
    obj_reference.save()
