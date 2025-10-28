@@ -127,34 +127,32 @@ class ArticleDocxMarkupAdmin(ModelAdmin):
 class UploadDocxViewSet(SnippetViewSet):
     model = UploadDocx
     add_view_class = ArticleDocxCreateView
-    menu_label = _("UploadDocx")
+    menu_label = _("Carregar DOCX")
     menu_icon = "folder"
     menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
+    add_to_settings_menu = False
+    exclude_from_explorer = False
     list_per_page = 20
     list_display = (
         "title",
-        "get_estatus_display"
+        "get_estatus_display"  # Usar estatus, não status
     )
+    search_fields = ("title",)
+    list_filter = ("estatus",)  # Usar estatus, não status
 
 
 class MarkupXMLViewSet(SnippetViewSet):
     model = MarkupXML
     add_view_class = ArticleDocxMarkupCreateView
     edit_view_class = ArticleDocxEditView
-    menu_label = _("MarkupXML")
+    menu_label = _("XML marcado")  # Alterado de "MarkupXML"
     menu_icon = "folder"
     menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
-    
+    add_to_settings_menu = False
+    exclude_from_explorer = False
     list_display=("title", )
     list_per_page = 20
+    search_fields = ("title",)
 
 """
 class MarkupAdminGroup(ModelAdminGroup):
@@ -188,13 +186,11 @@ class CollectionModelCreateView(CreateView):
 class CollectionModelViewSet(SnippetViewSet):
     model = CollectionModel
     add_view_class = CollectionModelCreateView
-    menu_label = _("CollectionModel")
+    menu_label = _("Modelo de Coleções")  # Alterado de "CollectionModel"
     menu_icon = "folder"
     menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
+    add_to_settings_menu = False
+    exclude_from_explorer = False
     list_per_page = 20
     list_display = (
         "collection",
@@ -210,14 +206,11 @@ class JournalModelCreateView(CreateView):
 
 class JournalModelViewSet(SnippetViewSet):
     model = JournalModel
-    #add_view_class = JournalModelCreateView
-    menu_label = _("JournalModel")
+    menu_label = _("Modelo de Revistas")  # Alterado de "JournalModel"
     menu_icon = "folder"
     menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
+    add_to_settings_menu = False
+    exclude_from_explorer = False
     list_per_page = 20
     list_display = (
         "title",
@@ -243,10 +236,10 @@ class JournalModelViewSet(SnippetViewSet):
 
 
 class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = 'markup_docx'
-    menu_label = _('Markup Docx')
+    menu_name = 'docx_files'  # Renomeado de 'docx_processor'
+    menu_label = _('DOCX Files')
     menu_icon = "folder-open-inverse"
-    menu_order = get_menu_order('markup_docx')
+    menu_order = 0  # Mudado de 1 para 0 para ficar na primeira posição
     items = (
         UploadDocxViewSet,
         MarkupXMLViewSet,

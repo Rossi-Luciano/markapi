@@ -25,7 +25,7 @@ class ReferenceCreateView(CreateView):
             if linea:  # Evitar procesar líneas vacías
                 new_reference = Reference.objects.create(
                     mixed_citation=linea,
-                    estatus=1,  # Estatus predeterminado
+                    status=1,  # Estatus predeterminado
                     creator=self.request.user,  # Usuario asociado
                 )
                 get_reference.delay(new_reference.id)
@@ -40,7 +40,7 @@ class ReferenceModelViewSet(SnippetViewSet):
     add_view_class = ReferenceCreateView
     menu_label = _("Reference")
     menu_icon = "folder"
-    menu_order = 1
+    menu_order = 3
     exclude_from_explorer = (
         False
     )

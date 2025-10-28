@@ -56,9 +56,9 @@ class XMLDocumentSnippetViewSet(SnippetViewSet):
     verbose_name = _("XML Document")
     verbose_name_plural = _("XML Documents")
     icon = "folder-open-inverse"
-    menu_name = "xml_manager"
+    menu_name = "xml_files"
     menu_label = _("XML Document")
-    menu_order = get_menu_order("xml_manager")
+    menu_order = get_menu_order("xml_files")
     add_to_admin_menu = False
 
     list_display = (
@@ -70,6 +70,7 @@ class XMLDocumentSnippetViewSet(SnippetViewSet):
     )
 
     search_fields = ("xml_file",)
+    list_filter = ("uploaded_at",)
 
 
 class XMLDocumentPDFSnippetViewSet(SnippetViewSet):
@@ -77,9 +78,9 @@ class XMLDocumentPDFSnippetViewSet(SnippetViewSet):
     verbose_name = _("XML Document PDF")
     verbose_name_plural = _("XML Document PDFs")
     icon = "doc-full"
-    menu_name = "xml_manager"
+    menu_name = "xml_files"
     menu_label = _("XML Document PDF")
-    menu_order = get_menu_order("xml_manager")
+    menu_order = get_menu_order("xml_files")
     add_to_admin_menu = False
 
     list_display = (
@@ -90,7 +91,8 @@ class XMLDocumentPDFSnippetViewSet(SnippetViewSet):
         "uploaded_at"
     )
 
-    search_fields = ("pdf_file",)
+    search_fields = ("pdf_file", "language")
+    list_filter = ("language", "uploaded_at")
 
 
 class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
@@ -98,9 +100,9 @@ class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
     verbose_name = _("XML Document HTML")
     verbose_name_plural = _("XML Document HTMLs")
     icon = "doc-full"
-    menu_name = "xml_manager"
+    menu_name = "xml_files"
     menu_label = _("XML Document HTML")
-    menu_order = get_menu_order("xml_manager")
+    menu_order = get_menu_order("xml_files")
     add_to_admin_menu = False
 
     list_display = (
@@ -110,14 +112,16 @@ class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
         "uploaded_at",
     )
 
-    search_fields = ("html_file",)
+    search_fields = ("html_file", "language")
+    list_filter = ("language", "uploaded_at")
 
 
 class XMLDocumentSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = 'xml_manager'
-    menu_label = _("XML Manager")
+    menu_name = 'xml_files'
+    menu_label = _("XML Files")
     menu_icon = "folder-open-inverse"
-    menu_order = get_menu_order("xml_manager")
+    menu_order = 0
+    # menu_order = get_menu_order("xml_files")
     items = (
         XMLDocumentSnippetViewSet,
         XMLDocumentHTMLSnippetViewSet,
@@ -131,5 +135,5 @@ register_snippet(XMLDocumentSnippetViewSetGroup)
 @hooks.register('register_admin_urls')
 def register_admin_urls():
     return [
-        path('xml-manager/', include(urls)),
+        path('xml-files/', include(urls)),
     ]

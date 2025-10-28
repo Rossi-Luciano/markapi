@@ -94,7 +94,7 @@ class LlamaModelViewSet(SnippetViewSet):
     edit_view_class = LlamaModelEditView
     menu_label = _("AI LLM Model")
     menu_icon = "folder"
-    menu_order = 100
+    menu_order = 3
     exclude_from_explorer = (
         False  # or True to exclude pages of this type from Wagtail's explorer view
     )
