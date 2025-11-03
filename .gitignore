@@ -174,3 +174,19 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/django
 
 llama3/llama-3.2/*
+# Backups locais
+*.backup
+Makefile.backup
+core/media.backup/
+
+# Arquivos de trabalho temporário
+diff.txt
+
+# Modelos de AI (muito grandes)
+models/
+
+# Binários
+appimagetool
+
+# Migrations geradas localmente
+reference/migrations/0002_rename_estatus_to_status.py

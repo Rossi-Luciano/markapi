@@ -55,7 +55,7 @@ stop:  ## Stop all app using $(compose)
 
 restart:
 	@docker compose -f $(compose) restart
-	
+
 ps:  ## See all containers using $(compose)
 	@docker compose -f $(compose) ps
 
@@ -102,10 +102,10 @@ django_load_auth: ## Run manage.py dumpdata auth --indent=2 $(compose)
 	@docker compose -f $(compose) run --rm django python manage.py loaddata --database=default fixtures/auth.json
 
 dump_data: ## Dump database into .sql $(compose)
-	docker exec -t scielo_markup_local_postgres pg_dumpall -c -U debug > dump_`date +%d-%m-%Y"_"%H_%M_%S`.sql
+	docker exec -t markapi_local_postgres pg_dumpall -c -U debug > dump_`date +%d-%m-%Y"_"%H_%M_%S`.sql
 
 restore_data: ## Restore database into from latest.sql file $(compose)
-	cat backup/latest.sql | docker exec -i scielo_markup_local_postgres psql -U debug
+	cat backup/latest.sql | docker exec -i markapi_local_postgres psql -U debug
 
 ############################################
 ## Atalhos Úteis                          ##
@@ -133,5 +133,4 @@ clean_migrations: ## Remove all migrations
 	@echo "Migrations cleaned successfully."
 
 clean_celery_logs:
-	@sudo truncate -s 0 $$(docker inspect --format='{{.LogPath}}' scielo_markup_local_celeryworker)
-	
+	@sudo truncate -s 0 $$(docker inspect --format='{{.LogPath}}' markapi_local_celeryworker)
