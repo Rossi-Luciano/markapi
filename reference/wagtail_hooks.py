@@ -1,10 +1,15 @@
+# Third-party imports
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from wagtail.snippets.models import register_snippet
-from wagtail.snippets.views.snippets import CreateView, SnippetViewSet
+from wagtail.snippets.views.snippets import (
+    CreateView,
+    SnippetViewSet,
+)
 
+# Local application imports
+from reference.data_utils import get_reference
 from reference.models import Reference
-from reference.tasks import get_reference
 
 
 class ReferenceCreateView(CreateView):
@@ -30,17 +35,17 @@ class ReferenceCreateView(CreateView):
         return HttpResponseRedirect(self.get_success_url())
         
 
-
-class ReferenceAdmin(SnippetViewSet):
+class ReferenceModelViewSet(SnippetViewSet):
     model = Reference
     add_view_class = ReferenceCreateView
     menu_label = _("Reference")
     menu_icon = "folder"
-    menu_order = 1
+    menu_order = 3
     exclude_from_explorer = (
         False
     )
     list_per_page = 20
     add_to_admin_menu = True
 
-register_snippet(ReferenceAdmin)
+
+register_snippet(ReferenceModelViewSet)
