@@ -1,6 +1,7 @@
 # Standard library imports
 import logging
 import os
+import time
 
 from config.settings.base import (
     LLAMA_ENABLED,
@@ -97,7 +98,9 @@ class LlamaService:
       model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
 
       # Generate content using Gemini
-      return model.generate_content(user_input).text
+      response_gemini = model.generate_content(user_input).text
+      time.sleep(15)
+      return response_gemini
 
     # Gemini not configured, fallback to LLaMA
     else:
