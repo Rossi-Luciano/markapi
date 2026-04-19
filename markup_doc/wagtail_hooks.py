@@ -22,7 +22,7 @@ from markup_doc.models import (
 )
 
 from config.menu import get_menu_order
-from markup_doc.tasks import task_sync_journals_from_api
+from markup_doc.tasks import get_labels, task_sync_journals_from_api
 from django.urls import path, reverse
 from django.utils.html import format_html
 from wagtail.admin import messages
@@ -56,6 +56,7 @@ class ArticleDocxCreateView(CreateView):
         self.object = form.save_all(self.request.user)
         self.object.estatus = ProcessStatus.PROCESSING
         self.object.save()
+        transaction.on_commit(lambda: get_labels.delay(self.object.title, self.request.user.id))
         return HttpResponseRedirect(self.get_success_url())
 
 
