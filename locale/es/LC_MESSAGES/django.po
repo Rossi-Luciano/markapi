@@ -3,13 +3,12 @@
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
-#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-09-04 14:18+0000\n"
-"PO-Revision-Date: 2025-09-03 HO:MI+ZONE\n"
+"POT-Creation-Date: 2025-10-24 13:56+0000\n"
+"PO-Revision-Date: 2025-10-27 HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Spanish <es@li.org>\n"
 "Language: es\n"
@@ -18,6 +17,102 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
+
+#: core/choices.py:192
+msgid "Editor-Chefe"
+msgstr "Editor en Jefe"
+
+#: core/choices.py:193
+msgid "Editor(es) Executivo"
+msgstr "Editor(es) Ejecutivo"
+
+#: core/choices.py:194
+msgid "Editor(es) Associados ou de Seção"
+msgstr "Editor(es) Asociados o de Sección"
+
+#: core/choices.py:195
+msgid "Equipe Técnica"
+msgstr "Equipo Técnico"
+
+#: core/choices.py:199
+msgid "January"
+msgstr "Enero"
+
+#: core/choices.py:200
+msgid "February"
+msgstr "Febrero"
+
+#: core/choices.py:201
+msgid "March"
+msgstr "Marzo"
+
+#: core/choices.py:202
+msgid "April"
+msgstr "Abril"
+
+#: core/choices.py:203
+msgid "May"
+msgstr "Mayo"
+
+#: core/choices.py:204
+msgid "June"
+msgstr "Junio"
+
+#: core/choices.py:205
+msgid "July"
+msgstr "Julio"
+
+#: core/choices.py:206
+msgid "August"
+msgstr "Agosto"
+
+#: core/choices.py:207
+msgid "September"
+msgstr "Septiembre"
+
+#: core/choices.py:208
+msgid "October"
+msgstr "Octubre"
+
+#: core/choices.py:209
+msgid "November"
+msgstr "Noviembre"
+
+#: core/choices.py:210
+msgid "December"
+msgstr "Diciembre"
+
+#: core/choices.py:216
+msgid "by"
+msgstr "por"
+
+#: core/choices.py:217
+msgid "by-sa"
+msgstr "by-sa"
+
+#: core/choices.py:218
+msgid "by-nc"
+msgstr "by-nc"
+
+#: core/choices.py:219
+msgid "by-nc-sa"
+msgstr "by-nc-sa"
+
+#: core/choices.py:220
+msgid "by-nd"
+msgstr "by-nd"
+
+#: core/choices.py:221
+msgid "by-nc-nd"
+msgstr "by-nc-nd"
+
+#: core/choices.py:225
+msgid "Male"
+msgstr "Masculino"
+
+#: core/choices.py:226
+msgid "Female"
+msgstr "Femenino"
 
 #: core/home/templates/home/welcome_page.html:6
 msgid "Visit the Wagtail website"
@@ -30,16 +125,6 @@ msgstr "Ver las notas de lanzamiento"
 #: core/home/templates/home/welcome_page.html:27
 msgid "Welcome to your new Wagtail site!"
 msgstr "¡Bienvenido a tu nuevo sitio Wagtail!"
-
-#: core/home/templates/home/welcome_page.html:28
-msgid ""
-"Please feel free to <a href=\"https://github.com/wagtail/wagtail/wiki/Slack"
-"\">join our community on Slack</a>, or get started with one of the links "
-"below."
-msgstr ""
-"Siéntete libre de <a href=\"https://github.com/wagtail/wagtail/wiki/Slack"
-"\">unirte a nuestra comunidad en Slack</a>, o comenzar con uno de los "
-"enlaces a continuación."
 
 #: core/home/templates/home/welcome_page.html:35
 msgid "Wagtail Documentation"
@@ -65,21 +150,83 @@ msgstr "Interfaz de Administración"
 msgid "Create your superuser first!"
 msgstr "¡Crea tu superusuario primero!"
 
-#: core/models.py:19 tracker/models.py:76
+#: core/models.py:28 tracker/models.py:76
 msgid "Creation date"
 msgstr "Fecha de creación"
 
-#: core/models.py:22
+#: core/models.py:31
 msgid "Last update date"
 msgstr "Fecha de última actualización"
 
-#: core/models.py:27
+#: core/models.py:36
 msgid "Creator"
 msgstr "Creador"
 
-#: core/models.py:37
+#: core/models.py:46
 msgid "Updater"
 msgstr "Actualizador"
+
+#: core/models.py:66
+msgid "Code"
+msgstr "Código"
+
+#: core/models.py:68
+msgid "Sex"
+msgstr "Sexo"
+
+#: core/models.py:133
+msgid "Language Name"
+msgstr "Nombre del Idioma"
+
+#: core/models.py:134
+msgid "Language code 2"
+msgstr "Código de idioma 2"
+
+#: core/models.py:142 core/models.py:190 core/models.py:207 core/models.py:251
+#: core/models.py:523 markup_doc/models.py:357 xml_manager/models.py:58
+#: xml_manager/models.py:90
+msgid "Language"
+msgstr "Idioma"
+
+#: core/models.py:143
+msgid "Languages"
+msgstr "Idiomas"
+
+#: core/models.py:186 markup_doc/models.py:129
+msgid "Text"
+msgstr "Texto"
+
+#: core/models.py:202 core/models.py:247
+msgid "Rich Text"
+msgstr "Texto Enriquecido"
+
+#: core/models.py:203
+msgid "Plain Text"
+msgstr "Texto Plano"
+
+#: core/models.py:268
+msgid "Year"
+msgstr "Año"
+
+#: core/models.py:269
+msgid "Month"
+msgstr "Mes"
+
+#: core/models.py:270 django_celery_beat/choices.py:18
+msgid "Day"
+msgstr "Día"
+
+#: core/models.py:301 core/models.py:382
+msgid "License"
+msgstr "Licencia"
+
+#: core/models.py:302 core/models.py:383
+msgid "Licenses"
+msgstr "Licencias"
+
+#: core/models.py:515
+msgid "File"
+msgstr "Archivo"
 
 #: core_settings/models.py:18 core_settings/models.py:19
 msgid "Site configuration"
@@ -180,10 +327,6 @@ msgstr "Segundos"
 msgid "Microseconds"
 msgstr "Microsegundos"
 
-#: django_celery_beat/choices.py:18
-msgid "Day"
-msgstr "Día"
-
 #: django_celery_beat/choices.py:19
 msgid "Hour"
 msgstr "Hora"
@@ -225,435 +368,751 @@ msgid "Nautical dusk"
 msgstr "Anochecer náutico"
 
 #: django_celery_beat/choices.py:32
-msgid "Solar noon"
-msgstr "Mediodía solar"
+msgid "Dawn"
+msgstr "Amanecer"
 
 #: django_celery_beat/choices.py:33
 msgid "Sunrise"
-msgstr "Amanecer"
+msgstr "Salida del sol"
 
 #: django_celery_beat/choices.py:34
+msgid "Solar noon"
+msgstr "Mediodía solar"
+
+#: django_celery_beat/choices.py:35
 msgid "Sunset"
-msgstr "Atardecer"
+msgstr "Puesta del sol"
 
-#: django_celery_beat/models.py:70
-msgid "Solar Event"
-msgstr "Evento Solar"
+#: django_celery_beat/choices.py:36
+msgid "Dusk"
+msgstr "Anochecer"
 
-#: django_celery_beat/models.py:71
-msgid "The type of solar event when the job should run"
-msgstr "El tipo de evento solar cuando la tarea debe ejecutarse"
+#: django_celery_beat/forms.py:139
+msgid "Crontab expression is invalid. Please check the input fields."
+msgstr "La expresión crontab es inválida. Por favor verifica los campos de entrada."
 
-#: django_celery_beat/models.py:76
-msgid "Latitude"
-msgstr "Latitud"
-
-#: django_celery_beat/models.py:77
-msgid "Run the task when the event happens at this latitude"
-msgstr "Ejecutar la tarea cuando el evento ocurra en esta latitud"
-
-#: django_celery_beat/models.py:83
-msgid "Longitude"
-msgstr "Longitud"
-
-#: django_celery_beat/models.py:84
-msgid "Run the task when the event happens at this longitude"
-msgstr "Ejecutar la tarea cuando el evento ocurra en esta longitud"
-
-#: django_celery_beat/models.py:91
-msgid "solar event"
-msgstr "evento solar"
-
-#: django_celery_beat/models.py:92
-msgid "solar events"
-msgstr "eventos solares"
-
-#: django_celery_beat/models.py:132
-msgid "Number of Periods"
-msgstr "Número de Períodos"
-
-#: django_celery_beat/models.py:134
-msgid "Number of interval periods to wait before running the task again"
-msgstr ""
-"Número de períodos de intervalo a esperar antes de ejecutar la tarea "
-"nuevamente"
-
-#: django_celery_beat/models.py:141
-msgid "Interval Period"
-msgstr "Período de Intervalo"
-
-#: django_celery_beat/models.py:142
-msgid "The type of period between task runs (Example: days)"
-msgstr "El tipo de período entre ejecuciones de la tarea (Ejemplo: días)"
-
-#: django_celery_beat/models.py:148
+#: django_celery_beat/models.py:24
 msgid "interval"
 msgstr "intervalo"
 
-#: django_celery_beat/models.py:149
+#: django_celery_beat/models.py:25
 msgid "intervals"
 msgstr "intervalos"
 
-#: django_celery_beat/models.py:175
-msgid "every {}"
-msgstr "cada {}"
+#: django_celery_beat/models.py:52
+msgid "Minute (integer from 0-59)"
+msgstr "Minuto (entero de 0-59)"
 
-#: django_celery_beat/models.py:180
-msgid "every {} {}"
-msgstr "cada {} {}"
+#: django_celery_beat/models.py:54
+msgid "Hour (integer from 0-23)"
+msgstr "Hora (entero de 0-23)"
 
-#: django_celery_beat/models.py:191
-msgid "Clock Time"
-msgstr "Hora del Reloj"
+#: django_celery_beat/models.py:56
+msgid "Day of the week (0-6, 0 is Sunday, or 'mon', 'tue', etc.)"
+msgstr "Día de la semana (0-6, 0 es Domingo, o 'mon', 'tue', etc.)"
 
-#: django_celery_beat/models.py:192
-msgid "Run the task at clocked time"
-msgstr "Ejecutar la tarea a la hora programada"
+#: django_celery_beat/models.py:59
+msgid "Day of the month (1-31)"
+msgstr "Día del mes (1-31)"
 
-#: django_celery_beat/models.py:198 django_celery_beat/models.py:199
-msgid "clocked"
-msgstr "programado"
+#: django_celery_beat/models.py:61
+msgid "Month of the year (1-12)"
+msgstr "Mes del año (1-12)"
 
-#: django_celery_beat/models.py:239
-msgid "Minute(s)"
-msgstr "Minuto(s)"
+#: django_celery_beat/models.py:63
+msgid "Timezone"
+msgstr "Zona horaria"
 
-#: django_celery_beat/models.py:240
-msgid "Cron Minutes to Run. Use \"*\" for \"all\". (Example: \"0,30\")"
-msgstr ""
-"Minutos de Cron para Ejecutar. Usa \"*\" para \"todos\". (Ejemplo: \"0,30\")"
+#: django_celery_beat/models.py:92
+msgid "The human-readable timezone name that this schedule will follow (e.g. 'Europe/Berlin')"
+msgstr "El nombre legible de la zona horaria que seguirá este horario (ej. 'Europe/Berlin')"
 
-#: django_celery_beat/models.py:246
-msgid "Hour(s)"
-msgstr "Hora(s)"
-
-#: django_celery_beat/models.py:247
-msgid "Cron Hours to Run. Use \"*\" for \"all\". (Example: \"8,20\")"
-msgstr ""
-"Horas de Cron para Ejecutar. Usa \"*\" para \"todas\". (Ejemplo: \"8,20\")"
-
-#: django_celery_beat/models.py:253
-msgid "Day(s) Of The Week"
-msgstr "Día(s) de la Semana"
-
-#: django_celery_beat/models.py:255
-msgid "Cron Days Of The Week to Run. Use \"*\" for \"all\". (Example: \"0,5\")"
-msgstr ""
-"Días de la Semana de Cron para Ejecutar. Usa \"*\" para \"todos\". (Ejemplo: "
-"\"0,5\")"
-
-#: django_celery_beat/models.py:262
-msgid "Day(s) Of The Month"
-msgstr "Día(s) del Mes"
-
-#: django_celery_beat/models.py:264
-msgid ""
-"Cron Days Of The Month to Run. Use \"*\" for \"all\". (Example: \"1,15\")"
-msgstr ""
-"Días del Mes de Cron para Ejecutar. Usa \"*\" para \"todos\". (Ejemplo: "
-"\"1,15\")"
-
-#: django_celery_beat/models.py:271
-msgid "Month(s) Of The Year"
-msgstr "Mes(es) del Año"
-
-#: django_celery_beat/models.py:273
-msgid ""
-"Cron Months Of The Year to Run. Use \"*\" for \"all\". (Example: \"0,6\")"
-msgstr ""
-"Meses del Año de Cron para Ejecutar. Usa \"*\" para \"todos\". (Ejemplo: "
-"\"0,6\")"
-
-#: django_celery_beat/models.py:280
-msgid "Cron Timezone"
-msgstr "Zona Horaria de Cron"
-
-#: django_celery_beat/models.py:281
-msgid "Timezone to Run the Cron Schedule on. Default is UTC."
-msgstr "Zona horaria para ejecutar la programación Cron. Por defecto es UTC."
-
-#: django_celery_beat/models.py:287
+#: django_celery_beat/models.py:116
 msgid "crontab"
 msgstr "crontab"
 
-#: django_celery_beat/models.py:288
+#: django_celery_beat/models.py:117
 msgid "crontabs"
 msgstr "crontabs"
 
-#: django_celery_beat/models.py:385
+#: django_celery_beat/models.py:137
 msgid "Name"
 msgstr "Nombre"
 
-#: django_celery_beat/models.py:386
-msgid "Short Description For This Task"
-msgstr "Descripción Corta para esta Tarea"
+#: django_celery_beat/models.py:138
+msgid "Event"
+msgstr "Evento"
 
-#: django_celery_beat/models.py:392
-msgid ""
-"The Name of the Celery Task that Should be Run.  (Example: \"proj.tasks."
-"import_contacts\")"
-msgstr ""
-"El Nombre de la Tarea Celery que Debe Ejecutarse. (Ejemplo: \"proj.tasks."
-"import_contacts\")"
+#: django_celery_beat/models.py:139
+msgid "Latitude"
+msgstr "Latitud"
 
-#: django_celery_beat/models.py:404
-msgid "Interval Schedule"
-msgstr "Programación por Intervalos"
+#: django_celery_beat/models.py:141
+msgid "Longitude"
+msgstr "Longitud"
 
-#: django_celery_beat/models.py:406
-msgid ""
-"Interval Schedule to run the task on.  Set only one schedule type, leave the "
-"others null."
-msgstr ""
-"Programación por Intervalos para ejecutar la tarea. Establece solo un tipo "
-"de programación, deja los otros nulos."
+#: django_celery_beat/models.py:171
+msgid "solar event"
+msgstr "evento solar"
 
-#: django_celery_beat/models.py:415
-msgid "Crontab Schedule"
-msgstr "Programación Crontab"
+#: django_celery_beat/models.py:172
+msgid "solar events"
+msgstr "eventos solares"
 
-#: django_celery_beat/models.py:417
-msgid ""
-"Crontab Schedule to run the task on.  Set only one schedule type, leave the "
-"others null."
-msgstr ""
-"Programación Crontab para ejecutar la tarea. Establece solo un tipo de "
-"programación, deja los otros nulos."
+#: django_celery_beat/models.py:184
+msgid "Clocked Time"
+msgstr "Hora Programada"
 
-#: django_celery_beat/models.py:426
-msgid "Solar Schedule"
-msgstr "Programación Solar"
+#: django_celery_beat/models.py:191
+msgid "clocked schedule"
+msgstr "horario programado"
 
-#: django_celery_beat/models.py:428
-msgid ""
-"Solar Schedule to run the task on.  Set only one schedule type, leave the "
-"others null."
-msgstr ""
-"Programación Solar para ejecutar la tarea. Establece solo un tipo de "
-"programación, deja los otros nulos."
+#: django_celery_beat/models.py:192
+msgid "clocked schedules"
+msgstr "horarios programados"
 
-#: django_celery_beat/models.py:437
-msgid "Clocked Schedule"
-msgstr "Programación por Hora"
+#: django_celery_beat/models.py:290
+msgid "seconds"
+msgstr "segundos"
 
-#: django_celery_beat/models.py:439
-msgid ""
-"Clocked Schedule to run the task on.  Set only one schedule type, leave the "
-"others null."
-msgstr ""
-"Programación por Hora para ejecutar la tarea. Establece solo un tipo de "
-"programación, deja los otros nulos."
+#: django_celery_beat/models.py:295
+msgid "positional arguments"
+msgstr "argumentos posicionales"
 
-#: django_celery_beat/models.py:447
-msgid "Positional Arguments"
-msgstr "Argumentos Posicionales"
-
-#: django_celery_beat/models.py:448
+#: django_celery_beat/models.py:297
 msgid "JSON encoded positional arguments (Example: [\"arg1\", \"arg2\"])"
-msgstr ""
-"Argumentos posicionales codificados en JSON (Ejemplo: [\"arg1\", \"arg2\"])"
+msgstr "Argumentos posicionales codificados en JSON (Ejemplo: [\"arg1\", \"arg2\"])"
 
-#: django_celery_beat/models.py:453
-msgid "Keyword Arguments"
-msgstr "Argumentos con Palabra Clave"
+#: django_celery_beat/models.py:302
+msgid "keyword arguments"
+msgstr "argumentos de palabras clave"
 
-#: django_celery_beat/models.py:455
+#: django_celery_beat/models.py:304
 msgid "JSON encoded keyword arguments (Example: {\"argument\": \"value\"})"
-msgstr ""
-"Argumentos con palabra clave codificados en JSON (Ejemplo: {\"argument\": "
-"\"value\"})"
+msgstr "Argumentos de palabras clave codificados en JSON (Ejemplo: {\"argument\": \"value\"})"
 
-#: django_celery_beat/models.py:464
-msgid "Queue Override"
-msgstr "Anulación de Cola"
+#: django_celery_beat/models.py:309
+msgid "queue"
+msgstr "cola"
 
-#: django_celery_beat/models.py:466
-msgid "Queue defined in CELERY_TASK_QUEUES. Leave None for default queuing."
-msgstr "Cola definida en CELERY_TASK_QUEUES. Deja None para cola por defecto."
+#: django_celery_beat/models.py:313
+msgid "exchange"
+msgstr "intercambio"
 
-#: django_celery_beat/models.py:478
-msgid "Exchange"
-msgstr "Exchange"
+#: django_celery_beat/models.py:317
+msgid "routing key"
+msgstr "clave de enrutamiento"
 
-#: django_celery_beat/models.py:479
-msgid "Override Exchange for low-level AMQP routing"
-msgstr "Anular Exchange para enrutamiento AMQP de bajo nivel"
+#: django_celery_beat/models.py:321
+msgid "headers"
+msgstr "encabezados"
 
-#: django_celery_beat/models.py:486
-msgid "Routing Key"
-msgstr "Clave de Enrutamiento"
-
-#: django_celery_beat/models.py:487
-msgid "Override Routing Key for low-level AMQP routing"
-msgstr "Anular Clave de Enrutamiento para enrutamiento AMQP de bajo nivel"
-
-#: django_celery_beat/models.py:492
-msgid "AMQP Message Headers"
-msgstr "Cabeceras de Mensaje AMQP"
-
-#: django_celery_beat/models.py:493
+#: django_celery_beat/models.py:323
 msgid "JSON encoded message headers for the AMQP message."
-msgstr "Cabeceras de mensaje codificadas en JSON para el mensaje AMQP."
+msgstr "Encabezados de mensaje codificados en JSON para el mensaje AMQP."
 
-#: django_celery_beat/models.py:501
-msgid "Priority"
-msgstr "Prioridad"
+#: django_celery_beat/models.py:327
+msgid "priority"
+msgstr "prioridad"
 
-#: django_celery_beat/models.py:503
-msgid ""
-"Priority Number between 0 and 255. Supported by: RabbitMQ, Redis (priority "
-"reversed, 0 is highest)."
-msgstr ""
-"Número de Prioridad entre 0 y 255. Soportado por: RabbitMQ, Redis (prioridad "
-"invertida, 0 es la más alta)."
+#: django_celery_beat/models.py:329
+msgid "Priority Number between 0 and 255. Supported by: RabbitMQ."
+msgstr "Número de prioridad entre 0 y 255. Compatible con: RabbitMQ."
 
-#: django_celery_beat/models.py:510
-msgid "Expires Datetime"
-msgstr "Fecha y Hora de Expiración"
+#: django_celery_beat/models.py:336
+msgid "expires"
+msgstr "expira"
 
-#: django_celery_beat/models.py:512
-msgid ""
-"Datetime after which the schedule will no longer trigger the task to run"
-msgstr ""
-"Fecha y hora después de la cual la programación ya no activará la ejecución "
-"de la tarea"
+#: django_celery_beat/models.py:338
+msgid "Datetime after which the schedule will no longer trigger the task to run"
+msgstr "Fecha y hora después de la cual el horario ya no activará la ejecución de la tarea"
 
-#: django_celery_beat/models.py:519
-msgid "Expires timedelta with seconds"
-msgstr "Expira timedelta con segundos"
+#: django_celery_beat/models.py:343
+msgid "expire seconds"
+msgstr "segundos de expiración"
 
-#: django_celery_beat/models.py:521
-msgid ""
-"Timedelta with seconds which the schedule will no longer trigger the task to "
-"run"
-msgstr ""
-"Timedelta con segundos después del cual la programación ya no activará la "
-"ejecución de la tarea"
+#: django_celery_beat/models.py:345
+msgid "Timedelta with seconds which the schedule will no longer trigger the task to run"
+msgstr "Timedelta en segundos después del cual el horario ya no activará la ejecución de la tarea"
 
-#: django_celery_beat/models.py:527
-msgid "One-off Task"
-msgstr "Tarea Única"
+#: django_celery_beat/models.py:350
+msgid "one-off task"
+msgstr "tarea única"
 
-#: django_celery_beat/models.py:528
+#: django_celery_beat/models.py:352
 msgid "If True, the schedule will only run the task a single time"
-msgstr "Si es Verdadero, la programación ejecutará la tarea solo una vez"
+msgstr "Si es True, el horario solo ejecutará la tarea una vez"
 
-#: django_celery_beat/models.py:533
-msgid "Start Datetime"
-msgstr "Fecha y Hora de Inicio"
+#: django_celery_beat/models.py:356
+msgid "start datetime"
+msgstr "fecha y hora de inicio"
 
-#: django_celery_beat/models.py:535
+#: django_celery_beat/models.py:358
 msgid "Datetime when the schedule should begin triggering the task to run"
-msgstr ""
-"Fecha y hora cuando la programación debe comenzar a activar la ejecución de "
-"la tarea"
+msgstr "Fecha y hora en que el horario debe comenzar a activar la ejecución de la tarea"
 
-#: django_celery_beat/models.py:540
-msgid "Enabled"
-msgstr "Habilitado"
+#: django_celery_beat/models.py:363
+msgid "enabled"
+msgstr "habilitado"
 
-#: django_celery_beat/models.py:541
+#: django_celery_beat/models.py:365
 msgid "Set to False to disable the schedule"
-msgstr "Establecer en Falso para deshabilitar la programación"
+msgstr "Establecer en False para deshabilitar el horario"
 
-#: django_celery_beat/models.py:549
-msgid "Last Run Datetime"
-msgstr "Fecha y Hora de Última Ejecución"
+#: django_celery_beat/models.py:369
+msgid "last run at"
+msgstr "última ejecución en"
 
-#: django_celery_beat/models.py:551
-msgid ""
-"Datetime that the schedule last triggered the task to run. Reset to None if "
-"enabled is set to False."
-msgstr ""
-"Fecha y hora en que la programación activó por última vez la ejecución de la "
-"tarea. Se restablece a None si habilitado se establece en Falso."
+#: django_celery_beat/models.py:371
+msgid "Datetime that the schedule last triggered the task to run. Reset to None if enabled is set to False."
+msgstr "Fecha y hora en que el horario activó por última vez la ejecución de la tarea. Se restablece a None si enabled se establece en False."
 
-#: django_celery_beat/models.py:558
-msgid "Total Run Count"
-msgstr "Conteo Total de Ejecuciones"
+#: django_celery_beat/models.py:376
+msgid "total run count"
+msgstr "conteo total de ejecuciones"
 
-#: django_celery_beat/models.py:560
+#: django_celery_beat/models.py:378
 msgid "Running count of how many times the schedule has triggered the task"
-msgstr "Conteo continuo de cuántas veces la programación ha activado la tarea"
+msgstr "Conteo de cuántas veces el horario ha activado la tarea"
 
-#: django_celery_beat/models.py:565
-msgid "Last Modified"
-msgstr "Última Modificación"
+#: django_celery_beat/models.py:382
+msgid "datetime changed"
+msgstr "fecha y hora modificada"
 
-#: django_celery_beat/models.py:566
+#: django_celery_beat/models.py:384
 msgid "Datetime that this PeriodicTask was last modified"
-msgstr "Fecha y hora en que esta Tarea Periódica fue modificada por última vez"
+msgstr "Fecha y hora en que esta PeriodicTask fue modificada por última vez"
 
-#: django_celery_beat/models.py:570
-msgid "Description"
-msgstr "Descripción"
+#: django_celery_beat/models.py:388
+msgid "description"
+msgstr "descripción"
 
-#: django_celery_beat/models.py:571
+#: django_celery_beat/models.py:390
 msgid "Detailed description about the details of this Periodic Task"
 msgstr "Descripción detallada sobre los detalles de esta Tarea Periódica"
 
-#: django_celery_beat/models.py:576
-msgid "This is the configuration area for executing asynchronous tasks."
-msgstr "Esta es el área de configuración de ejecución de tareas asíncronas."
+#: django_celery_beat/models.py:638
+msgid "Only one schedule can be selected: Interval, Crontab, Solar, or Clocked"
+msgstr "Solo se puede seleccionar un horario: Intervalo, Crontab, Solar o Programado"
 
-#: django_celery_beat/models.py:597
-msgid "Content"
-msgstr "Contenido"
+#: django_celery_beat/models.py:642
+msgid "One of interval, crontab, solar, or clocked must be set."
+msgstr "Debe establecerse uno de: intervalo, crontab, solar o programado."
 
-#: django_celery_beat/models.py:598
-msgid "Scheduler"
-msgstr "Programador"
-
-#: django_celery_beat/models.py:608
+#: django_celery_beat/models.py:668
 msgid "periodic task"
 msgstr "tarea periódica"
 
-#: django_celery_beat/models.py:609
+#: django_celery_beat/models.py:669
 msgid "periodic tasks"
 msgstr "tareas periódicas"
 
-#: django_celery_beat/templates/admin/djcelery/change_list.html:6
-msgid "Home"
-msgstr "Inicio"
+#: django_celery_beat/wagtail_hooks.py:217
+msgid "enabled,disabled"
+msgstr "habilitada,deshabilitada"
 
-#: django_celery_beat/views.py:34
-#, python-brace-format
-msgid "Task {0} was successfully run"
-msgstr "La tarea {0} fue ejecutada exitosamente"
+#: django_celery_beat/wagtail_hooks.py:224
+msgid "Periodic tasks"
+msgstr "Tareas periódicas"
 
-#: django_celery_beat/wagtail_hooks.py:193
-msgid "Tasks"
-msgstr "Tareas"
+#: journal/models.py:27
+msgid "Site ID"
+msgstr "ID del Sitio"
+
+#: journal/models.py:29
+msgid "Short title"
+msgstr "Título corto"
+
+#: journal/models.py:31
+msgid "Journal ISSN"
+msgstr "ISSN de la Revista"
+
+#: journal/models.py:33
+msgid "Online Journal ISSN"
+msgstr "ISSN de la Revista en Línea"
+
+#: journal/models.py:36
+msgid "ISSN SciELO"
+msgstr "ISSN SciELO"
+
+#: journal/models.py:38
+msgid "ISSN SciELO Legacy"
+msgstr "ISSN SciELO Legacy"
+
+#: journal/models.py:41
+msgid "Subject descriptors"
+msgstr "Descriptores de tema"
+
+#: journal/models.py:46
+msgid "Purpose"
+msgstr "Propósito"
+
+#: journal/models.py:49
+msgid "Sponsorship"
+msgstr "Patrocinio"
+
+#: journal/models.py:52
+msgid "Mission"
+msgstr "Misión"
+
+#: journal/models.py:55
+msgid "Index at"
+msgstr "Indexado en"
+
+#: journal/models.py:58
+msgid "Availability"
+msgstr "Disponibilidad"
+
+#: journal/models.py:61
+msgid "Summary form"
+msgstr "Forma de resumen"
+
+#: journal/models.py:64
+msgid "Standard"
+msgstr "Estándar"
+
+#: journal/models.py:67
+msgid "Alphabet title"
+msgstr "Título alfabético"
+
+#: journal/models.py:69
+msgid "Print title"
+msgstr "Título impreso"
+
+#: journal/models.py:72
+msgid "Short title (slug)"
+msgstr "Título corto (slug)"
+
+#: journal/models.py:76
+#: markup_doc/models.py:40
+msgid "Title"
+msgstr "Título"
+
+#: journal/models.py:81
+msgid "Subtitle"
+msgstr "Subtítulo"
+
+#: journal/models.py:86
+msgid "Next title"
+msgstr "Título siguiente"
+
+#: journal/models.py:90
+msgid "Previous title"
+msgstr "Título anterior"
+
+#: journal/models.py:94
+msgid "Control number"
+msgstr "Número de control"
+
+#: journal/models.py:97
+msgid "Publisher name"
+msgstr "Nombre del editor"
+
+#: journal/models.py:99
+msgid "Publisher country"
+msgstr "País del editor"
+
+#: journal/models.py:102
+msgid "Publisher state"
+msgstr "Estado del editor"
+
+#: journal/models.py:105
+msgid "Publisher city"
+msgstr "Ciudad del editor"
+
+#: journal/models.py:108
+msgid "Publisher address"
+msgstr "Dirección del editor"
+
+#: journal/models.py:111
+msgid "Publication level"
+msgstr "Nivel de publicación"
+
+#: journal/models.py:115
+msgid "Email"
+msgstr "Correo electrónico"
+
+#: journal/models.py:119
+msgid "URL online submission"
+msgstr "URL de envío en línea"
+
+#: journal/models.py:122
+msgid "URL home page"
+msgstr "URL de página principal"
+
+#: journal/models.py:146
+msgid "Journal"
+msgstr "Revista"
+
+#: journal/models.py:147
+msgid "Journals"
+msgstr "Revistas"
+
+#: journal/models.py:162
+msgid "Order"
+msgstr "Orden"
+
+#: journal/models.py:174
+msgid "Editor"
+msgstr "Editor"
+
+#: journal/models.py:175
+msgid "Editors"
+msgstr "Editores"
+
+#: journal/wagtail_hooks.py:57
+msgid "Journal and Editor"
+msgstr "Revista y Editor"
+
+#: location/models.py:11
+msgid "Country Name"
+msgstr "Nombre del País"
+
+#: location/models.py:12
+msgid "ACR3"
+msgstr "ACR3"
+
+#: location/models.py:13
+msgid "ACR2"
+msgstr "ACR2"
+
+#: location/models.py:23
+msgid "Country"
+msgstr "País"
+
+#: location/models.py:24
+msgid "Countries"
+msgstr "Países"
+
+#: location/models.py:36
+msgid "State name"
+msgstr "Nombre del estado"
+
+#: location/models.py:37
+msgid "ACR 2 (state)"
+msgstr "ACR 2 (estado)"
+
+#: location/models.py:48
+msgid "State"
+msgstr "Estado"
+
+#: location/models.py:49
+msgid "States"
+msgstr "Estados"
+
+#: location/models.py:61
+msgid "City name"
+msgstr "Nombre de la ciudad"
+
+#: location/models.py:75
+msgid "City"
+msgstr "Ciudad"
+
+#: location/models.py:76
+msgid "Cities"
+msgstr "Ciudades"
+
+#: location/wagtail_hooks.py:55
+msgid "Location"
+msgstr "Ubicación"
+
+#: markup_doc/choices.py:11
+msgid "Document without content"
+msgstr "Documento sin contenido"
+
+#: markup_doc/choices.py:12
+msgid "Structured document without references"
+msgstr "Documento estructurado sin referencias"
+
+#: markup_doc/choices.py:13
+msgid "Structured document"
+msgstr "Documento estructurado"
+
+#: markup_doc/choices.py:14
+msgid "Structured document and references"
+msgstr "Documento estructurado y referencias"
+
+#: markup_doc/models.py:33
+msgid "DOI"
+msgstr "DOI"
+
+#: markup_doc/models.py:56
+msgid "Rich Title"
+msgstr "Título Enriquecido"
+
+#: markup_doc/models.py:58
+msgid "Clean Title"
+msgstr "Título Limpio"
+
+#: markup_doc/models.py:97
+msgid "Document"
+msgstr "Documento"
+
+#: markup_doc/models.py:98
+msgid "Documents"
+msgstr "Documentos"
+
+#: markup_doc/models.py:130
+msgid "Type"
+msgstr "Tipo"
+
+#: markup_doc/models.py:137
+msgid "Paragraph"
+msgstr "Párrafo"
+
+#: markup_doc/models.py:138
+msgid "Paragraphs"
+msgstr "Párrafos"
+
+#: markup_doc/models.py:218
+msgid "Section title"
+msgstr "Título de sección"
+
+#: markup_doc/models.py:222
+msgid "Section code"
+msgstr "Código de sección"
+
+#: markup_doc/models.py:245
+msgid "Section"
+msgstr "Sección"
+
+#: markup_doc/models.py:246
+msgid "Sections"
+msgstr "Secciones"
+
+#: markup_doc/models.py:279
+msgid "Figure"
+msgstr "Figura"
+
+#: markup_doc/models.py:280
+msgid "Figures"
+msgstr "Figuras"
+
+#: markup_doc/models.py:306
+msgid "Table"
+msgstr "Tabla"
+
+#: markup_doc/models.py:307
+msgid "Tables"
+msgstr "Tablas"
+
+#: markup_doc/models.py:322
+msgid "Supplementary Material"
+msgstr "Material Suplementario"
+
+#: markup_doc/models.py:323
+msgid "Supplementary Materials"
+msgstr "Materiales Suplementarios"
+
+#: markup_doc/models.py:336
+msgid "Document ID"
+msgstr "ID de Documento"
+
+#: markup_doc/models.py:340
+msgid "Document ID type"
+msgstr "Tipo de ID de documento"
+
+#: markup_doc/models.py:349
+msgid "DOCX ID"
+msgstr "ID de DOCX"
+
+#: markup_doc/models.py:350
+msgid "DOCX IDs"
+msgstr "IDs de DOCX"
+
+#: markup_doc/models.py:360
+msgid "DOCX Subtitle"
+msgstr "Subtítulo de DOCX"
+
+#: markup_doc/models.py:377
+msgid "DOCX Body"
+msgstr "Cuerpo de DOCX"
+
+#: markup_doc/models.py:378
+msgid "DOCX Bodies"
+msgstr "Cuerpos de DOCX"
+
+#: markup_doc/models.py:386
+msgid "DOCX Section"
+msgstr "Sección de DOCX"
+
+#: markup_doc/models.py:387
+msgid "DOCX Sections"
+msgstr "Secciones de DOCX"
+
+#: markup_doc/models.py:400
+msgid "Legend"
+msgstr "Leyenda"
+
+#: markup_doc/models.py:405
+msgid "Caption"
+msgstr "Pie de imagen"
+
+#: markup_doc/models.py:409
+msgid "Source"
+msgstr "Fuente"
+
+#: markup_doc/models.py:410
+msgid "Target"
+msgstr "Destino"
+
+#: markup_doc/models.py:413
+msgid "Content type"
+msgstr "Tipo de contenido"
+
+#: markup_doc/models.py:414
+msgid "MIME Type"
+msgstr "Tipo MIME"
+
+#: markup_doc/models.py:428
+msgid "DOCX Figure"
+msgstr "Figura de DOCX"
+
+#: markup_doc/models.py:429
+msgid "DOCX Figures"
+msgstr "Figuras de DOCX"
+
+#: markup_doc/models.py:442
+msgid "Columns"
+msgstr "Columnas"
+
+#: markup_doc/models.py:443
+msgid "Rows"
+msgstr "Filas"
+
+#: markup_doc/models.py:451
+msgid "DOCX Table"
+msgstr "Tabla de DOCX"
+
+#: markup_doc/models.py:452
+msgid "DOCX Tables"
+msgstr "Tablas de DOCX"
+
+#: markup_doc/wagtail_hooks.py:91
+msgid "MarkupDoc"
+msgstr "MarkupDoc"
+
+#: model_ai/models.py:17
+msgid "Model Provider"
+msgstr "Proveedor del Modelo"
+
+#: model_ai/models.py:22
+msgid "Model Name"
+msgstr "Nombre del Modelo"
+
+#: model_ai/models.py:27
+msgid "Model Type"
+msgstr "Tipo de Modelo"
+
+#: model_ai/models.py:32
+msgid "Context length"
+msgstr "Longitud del contexto"
+
+#: model_ai/models.py:34
+msgid "Hugging Face model name"
+msgstr "Nombre del modelo de Hugging Face"
+
+#: model_ai/models.py:35
+msgid "Model file"
+msgstr "Archivo del modelo"
+
+#: model_ai/models.py:36
+msgid "Hugging Face token"
+msgstr "Token de Hugging Face"
+
+#: model_ai/models.py:38
+msgid "Local model status"
+msgstr "Estado del modelo local"
+
+#: model_ai/models.py:44
+msgid "URL Markapi"
+msgstr "URL de Markapi"
+
+#: model_ai/models.py:49
+msgid "API KEY Gemini"
+msgstr "Clave API de Gemini"
+
+#: model_ai/models.py:67 model_ai/models.py:71
+msgid "Only one instance of LlamaModel is allowed."
+msgstr "Solo se permite una instancia de LlamaModel."
+
+#: model_ai/wagtail_hooks.py:28 model_ai/wagtail_hooks.py:63
+msgid "Model name is required."
+msgstr "El nombre del modelo es obligatorio."
+
+#: model_ai/wagtail_hooks.py:32 model_ai/wagtail_hooks.py:67
+msgid "Model file is required."
+msgstr "El archivo del modelo es obligatorio."
+
+#: model_ai/wagtail_hooks.py:36 model_ai/wagtail_hooks.py:71
+msgid "Hugging Face token is required."
+msgstr "El token de Hugging Face es obligatorio."
+
+#: model_ai/wagtail_hooks.py:42
+msgid "Model created and download started."
+msgstr "Modelo creado y descarga iniciada."
+
+#: model_ai/wagtail_hooks.py:46 model_ai/wagtail_hooks.py:82
+msgid "API AI URL is required."
+msgstr "La URL de API AI es obligatoria."
+
+#: model_ai/wagtail_hooks.py:50
+msgid "Model created, use API AI."
+msgstr "Modelo creado, usar API AI."
+
+#: model_ai/wagtail_hooks.py:77
+msgid "Model updated and download started."
+msgstr "Modelo actualizado y descarga iniciada."
+
+#: model_ai/wagtail_hooks.py:79
+msgid "Model updated and already downloaded."
+msgstr "Modelo actualizado y ya descargado."
+
+#: model_ai/wagtail_hooks.py:86
+msgid "Model updated, use API AI."
+msgstr "Modelo actualizado, usar API AI."
+
+#: model_ai/wagtail_hooks.py:95
+msgid "AI LLM Model"
+msgstr "Modelo de LLM de IA"
 
 #: reference/models.py:15
+msgid "No reference"
+msgstr "Sin referencia"
+
+#: reference/models.py:16
+msgid "Creating reference"
+msgstr "Creando referencia"
+
+#: reference/models.py:17
+msgid "Reference ready"
+msgstr "Referencia lista"
+
+#: reference/models.py:22
 msgid "Mixed Citation"
 msgstr "Cita mixta"
 
-#: reference/models.py:30
-#, fuzzy
-#| msgid "Reference"
-msgid "Referência"
-msgstr "Referencia"
+#: reference/models.py:25
+msgid "Reference status"
+msgstr "Estado de referencia"
 
-#: reference/models.py:31
-#, fuzzy
-#| msgid "Reference"
-msgid "Referências"
-msgstr "Referencia"
+#: reference/models.py:33
+msgid "Cited Elements"
+msgstr "Elementos Citados"
 
-#: reference/models.py:38
+#: reference/models.py:46
 msgid "Marked"
 msgstr "Marcado"
 
-#: reference/models.py:39
+#: reference/models.py:47
 msgid "Marked XML"
 msgstr "XML Marcado"
 
-#: reference/models.py:48
+#: reference/models.py:56
 msgid "Rating from 1 to 10"
 msgstr "Calificación del 1 al 10"
 
-#: reference/wagtail_hooks.py:45
+#: reference/wagtail_hooks.py:41
 msgid "Reference"
 msgstr "Referencia"
 
@@ -842,10 +1301,6 @@ msgstr "Archivo DOCX"
 msgid "Intermediate DOCX file generated during PDF creation"
 msgstr "Archivo DOCX intermedio generado durante la creación del PDF"
 
-#: xml_manager/models.py:58 xml_manager/models.py:90
-msgid "Language"
-msgstr "Idioma"
-
 #: xml_manager/models.py:59 xml_manager/models.py:91
 msgid "Language code or name"
 msgstr "Código o nombre del idioma"
@@ -881,21 +1336,37 @@ msgid "Exceptions file"
 msgstr "Archivo de excepciones"
 
 #: xml_manager/wagtail_hooks.py:118
-msgid "XML Manager"
-msgstr "Gestor XML"
+msgid "XML Processor"
+msgstr "Procesador XML"
 
-#, fuzzy
-#~| msgid "Marked"
-#~ msgid "marked"
-#~ msgstr "Marcado"
+#: menu items
+msgid "DOCX Files"
+msgstr "Archivos DOCX"
 
-#, fuzzy
-#~| msgid "Marked"
-#~ msgid "marked_xml"
-#~ msgstr "Marcado"
+#: menu items
+msgid "XML Files"
+msgstr "Archivos XML"
 
-#~ msgid "score"
-#~ msgstr "puntaje"
+#: menu items
+msgid "Tarefas"
+msgstr "Tareas"
 
-#~ msgid "AÃ§Ãµes"
-#~ msgstr "Acciones"
+#: menu items
+msgid "Carregar DOCX"
+msgstr "Cargar DOCX"
+
+#: menu items
+msgid "XML marcado"
+msgstr "XML marcado"
+
+#: markup_doc/wagtail_hooks.py
+msgid "You must first select a collection."
+msgstr "Debes seleccionar primero una colección."
+
+#: markup_doc/wagtail_hooks.py
+msgid "Wait a moment, there are no Journal elements yet."
+msgstr "Espera un momento, aún no existen elementos en Journal."
+
+#: markup_doc/wagtail_hooks.py
+msgid "Synchronizing journals from the API, please wait a moment..."
+msgstr "Sincronizando revistas desde la API, espera unos momentos..."

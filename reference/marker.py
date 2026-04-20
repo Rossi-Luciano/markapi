@@ -1,7 +1,7 @@
 import logging
 
-from llama3.generic_llama import (
-    GenericLlama,
+from model_ai.llama import (
+    LlamaService,
     LlamaDisabledError,
     LlamaNotInstalledError,
     LlamaModelNotFoundError,
@@ -12,7 +12,7 @@ from tracker.models import GeneralEvent
 
 def mark_reference(reference_text):
     try:
-        reference_marker = GenericLlama(MESSAGES, RESPONSE_FORMAT)
+        reference_marker = LlamaService(MESSAGES, RESPONSE_FORMAT)
         output = reference_marker.run(reference_text)
         for item in output.get("choices", []):
             yield item.get("message", {}).get("content", "")
