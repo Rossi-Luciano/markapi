@@ -1074,6 +1074,31 @@ def append_fragment(node_dest, val):
         node_dest.append(child)
 
 
+def extract_label_and_title(text):
+    """
+    Extrae el Label (Figura/Figure/Tabla/Table/Tabela + número) y el Title (resto del texto limpio).
+    Ignora mayúsculas y minúsculas y limpia puntuación/espacios entre el número y el título.
+    """
+    # Acepta Figura/Figure y Tabla/Table/Tabela
+    pattern = r'\b(Imagen|Imágen|Image|Imagem|Figura|Figure|Tabla|Table|Tabela)\s+(\d+)\b'
+    match = re.search(pattern, text, re.IGNORECASE)
+
+    if match:
+        word = match.group(1).capitalize()   # Normaliza capitalización
+        number = match.group(2)
+        label = f"{word} {number}"
+
+        # Texto después del número
+        rest = text[match.end():]
+
+        # Quita puntuación/espacios iniciales (.,;: guiones, etc.)
+        rest_clean = re.sub(r'^[\s\.,;:–—-]+', '', rest)
+
+        return {"label": label, "title": rest_clean.strip()}
+    else:
+        return {"label": None, "title": text.strip()}
+
+
 def proccess_special_content(text, data_body):
     # normaliza espacios no separables por si acaso
     text = re.sub(r'[\u00A0\u2007\u202F]', ' ', text)
