@@ -1,54 +1,39 @@
 from django.http import HttpResponseRedirect
-from django.utils.translation import gettext_lazy as _
-from django.contrib import messages
 from django.template.response import TemplateResponse
-from wagtail_modeladmin.options import ModelAdmin
-
+from django.utils.translation import gettext_lazy as _
+from wagtail.admin import messages
+from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import (
     CreateView,
     EditView,
     SnippetViewSet,
-    SnippetViewSetGroup
+    SnippetViewSetGroup,
 )
+from wagtail_modeladmin.options import ModelAdmin
 
-from markup_doc.models import ( 
+from markup_doc.models import (
     ArticleDocx,
     ArticleDocxMarkup,
-    UploadDocx,
-    MarkupXML,
     CollectionModel,
     JournalModel,
-    ProcessStatus
+    MarkupXML,
+    ProcessStatus,
+    UploadDocx,
 )
-
-from config.menu import get_menu_order
+from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import task_sync_journals_from_api
-from django.urls import path, reverse
-from django.utils.html import format_html
-from wagtail.admin import messages
-from wagtail.admin.views import generic
-
-from django.shortcuts import redirect, get_object_or_404
-from django.views import View
-
-from wagtail.snippets.models import register_snippet
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-from django.db import transaction
-
-from wagtail import hooks
-from django.templatetags.static import static
-from markup_doc.sync_api import sync_collection_from_api, sync_journals_from_api
 
 
 class ArticleDocxCreateView(CreateView):
-    #def get_form_class(self):
+    # def get_form_class(self):
     def dispatch(self, request, *args, **kwargs):
         if not CollectionModel.objects.exists():
             messages.warning(request, "Debes seleccionar primero una colección.")
             return HttpResponseRedirect(self.get_success_url())
         if not JournalModel.objects.exists():
-            messages.warning(request, "Espera un momento, aún no existen elementos en Journal.")
+            messages.warning(
+                request, "Espera un momento, aún no existen elementos en Journal."
+            )
             return HttpResponseRedirect(self.get_success_url())
         return super().dispatch(request, *args, **kwargs)
 
@@ -77,10 +62,7 @@ class ArticleDocxAdmin(ModelAdmin):
         False  # or True to exclude pages of this type from Wagtail's explorer view
     )
     list_per_page = 20
-    list_display = (
-        "title",
-        "get_estatus_display"
-    )
+    list_display = ("title", "get_estatus_display")
 
 
 class ArticleDocxMarkupCreateView(CreateView):
@@ -111,10 +93,7 @@ class UploadDocxViewSet(SnippetViewSet):
     add_to_settings_menu = False
     exclude_from_explorer = False
     list_per_page = 20
-    list_display = (
-        "title",
-        "get_estatus_display"  # Usar estatus, não status
-    )
+    list_display = ("title", "get_estatus_display")  # Usar estatus, não status
     search_fields = ("title",)
     list_filter = ("estatus",)  # Usar estatus, não status
 
@@ -128,19 +107,10 @@ class MarkupXMLViewSet(SnippetViewSet):
     menu_order = 1
     add_to_settings_menu = False
     exclude_from_explorer = False
-    list_display=("title", )
+    list_display = ("title",)
     list_per_page = 20
     search_fields = ("title",)
 
-"""
-class MarkupAdminGroup(ModelAdminGroup):
-    menu_label = _("Markup")
-    menu_icon = "folder-open-inverse"
-    menu_order = 1
-    items = (UploadDocxAdmin, MarkupXMLAdmin)
-
-modeladmin_register(MarkupAdminGroup)
-"""
 
 class CollectionModelCreateView(CreateView):
     def get_context_data(self, **kwargs):
@@ -152,13 +122,6 @@ class CollectionModelCreateView(CreateView):
         form.instance.save()
         task_sync_journals_from_api.delay()
         return HttpResponseRedirect(self.get_success_url())
-    
-    """
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["campo"] = "valor inicial dinámico"
-        return initial
-    """
 
 
 class CollectionModelViewSet(SnippetViewSet):
@@ -170,9 +133,7 @@ class CollectionModelViewSet(SnippetViewSet):
     add_to_settings_menu = False
     exclude_from_explorer = False
     list_per_page = 20
-    list_display = (
-        "collection",
-    )
+    list_display = ("collection",)
 
 
 class JournalModelCreateView(CreateView):
@@ -190,9 +151,7 @@ class JournalModelViewSet(SnippetViewSet):
     add_to_settings_menu = False
     exclude_from_explorer = False
     list_per_page = 20
-    list_display = (
-        "title",
-    )
+    list_display = ("title",)
 
     def index_view(self, request):
         response = super().index_view(request)
@@ -205,7 +164,10 @@ class JournalModelViewSet(SnippetViewSet):
                 return response
 
             if not JournalModel.objects.exists():
-                messages.warning(request, "Sincronizando journals desde la API, espera unos momentos…")
+                messages.warning(
+                    request,
+                    "Sincronizando journals desde la API, espera unos momentos…",
+                )
                 response.context_data["can_add"] = False
                 response.context_data["can_add_snippet"] = False
                 return response
@@ -214,15 +176,15 @@ class JournalModelViewSet(SnippetViewSet):
 
 
 class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = 'docx_files'  # Renomeado de 'docx_processor'
-    menu_label = _('DOCX Files')
+    menu_name = "docx_files"  # Renomeado de 'docx_processor'
+    menu_label = _("DOCX Files")
     menu_icon = "folder-open-inverse"
     menu_order = 0  # Mudado de 1 para 0 para ficar na primeira posição
     items = (
         UploadDocxViewSet,
         MarkupXMLViewSet,
         CollectionModelViewSet,
-        JournalModelViewSet
+        JournalModelViewSet,
     )
 
 
