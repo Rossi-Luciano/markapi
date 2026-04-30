@@ -82,6 +82,7 @@ LOCAL_APPS = [
     "reference",
     "xml_manager",
     "model_ai",
+    "markup_doc",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS + WAGTAIL
