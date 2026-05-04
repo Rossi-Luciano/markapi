@@ -5,22 +5,44 @@ from config import celery_app
 import json
 import re
 
+# Third-party imports
+import langid
+
 from markup_doc.models import UploadDocx
 from markup_doc.labeling_utils import (
     split_in_three,
     process_reference,
     process_references,
+    extract_keywords,
     create_labeled_object2,
+    get_data_first_block,
     get_llm_model_name
 )
 
 from markup_doc.models import ProcessStatus
 from markup_doc.labeling_utils import MODEL_NAME_GEMINI, MODEL_NAME_LLAMA
 from markuplib.function_docx import functionsDocx
-from model_ai.llama import LlamaService
+from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
 from markup_doc.sync_api import sync_journals_from_api
 
+
+def clean_labels(text):
+    # Eliminar etiquetas tipo [kwd] o [sectitle], incluso si tienen espacios como [/ doctitle ]
+    text = re.sub(r'\[\s*/?\s*\w+(?:\s+[^\]]+)?\s*\]', '', text)
+
+    # Reemplazar múltiples espacios por uno solo
+    text = re.sub(r'[ \t]+', ' ', text)
+
+    # Eliminar espacios antes de los signos de puntuación
+    text = re.sub(r'\s+([;:,.])', r'\1', text)
+
+    # Normalizar múltiples saltos de línea
+    text = re.sub(r'\n+', '\n', text)
+
+    # Quitar espacios al principio y final
+    return text.strip()
+    
 
 @celery_app.task()
 def task_sync_journals_from_api():
@@ -67,6 +89,141 @@ def get_labels(title, user_id):
             continue
 
         obj = {}
+        if item.get('type') in [
+                                    '<abstract>', 
+                                    '<date-accepted>', 
+                                    '<date-received>',
+                                    '<kwd-group>'
+                                    ]:
+            if item.get('type') == '<abstract>':
+                if i + 1 < len(content):
+                    obj['type'] = 'paragraph'
+                    obj['value'] = {
+                        'label': '<abstract-title>',
+                        'paragraph': item.get('text')
+                    }
+                    stream_data.append(obj.copy())
+
+                    next_item = content[i + 1]
+                    obj['type'] = 'paragraph_with_language'
+                    obj['value'] = {
+                        'label': '<abstract>',
+                        'paragraph': next_item.get('text'),
+                        'language': langid.classify(next_item.get('text'))[0] or None
+                    }
+                    stream_data.append(obj.copy())
+            
+            elif item.get('type') == '<kwd-group>':
+                keywords = extract_keywords(item.get('text'))
+                obj['type'] = 'paragraph'
+                obj['value'] = {
+                        'label': '<kwd-title>',
+                        'paragraph': keywords['title']
+                    }
+                stream_data.append(obj.copy())
+
+                obj['type'] = 'paragraph_with_language'
+                obj['value'] = {
+                        'label': '<kwd-group>',
+                        'paragraph': keywords['keywords'],
+                        'language': langid.classify(keywords['title'].replace('<italic>', '').replace('</italic>', ''))[0] or None
+                    }
+                stream_data.append(obj.copy())
+
+            else:        
+                obj['type'] = 'paragraph'
+                obj['value'] = {
+                    'label': item.get('type') ,
+                    'paragraph': item.get('text')
+                }
+                stream_data.append(obj.copy())
+            continue
+
+        if item.get('type') == 'first_block':
+            llm_first_block = LlamaService(mode='prompt', temperature=0.1)
+
+            if get_llm_model_name() == MODEL_NAME_GEMINI:
+                output = llm_first_block.run(LlamaInputSettings.get_first_metadata(clean_labels(item.get('text'))))
+                match = re.search(r'\{.*\}', output, re.DOTALL)
+                if match:
+                    output = match.group(0)
+                    output = json.loads(output)
+
+            if get_llm_model_name() == MODEL_NAME_LLAMA:
+
+                output_author = get_data_first_block(clean_labels(item.get('text')), 'author', user_id)
+                
+                output_affiliation = get_data_first_block(clean_labels(item.get('text')), 'affiliation', user_id)
+                
+                output_doi = get_data_first_block(clean_labels(item.get('text')), 'doi', user_id)
+                
+                output_title = get_data_first_block(clean_labels(item.get('text')), 'title', user_id)
+
+                # 1. Parsear cada salida
+                doi_section = output_doi
+                titles = output_title
+                authors = output_author
+                affiliations = output_affiliation
+
+                # 2. Combinar en un único JSON
+                output = {
+                    "doi": doi_section.get("doi", ""),
+                    "section": doi_section.get("section", ""),
+                    "titles": titles,
+                    "authors": authors,
+                    "affiliations": affiliations
+                }
+
+            obj['type'] = 'paragraph'
+            obj['value'] = {
+                'label': '<article-id>',
+                'paragraph': output['doi']
+            }
+            stream_data.append(obj.copy())
+            obj['value'] = {
+                'label': '<subject>',
+                'paragraph': output['section']
+            }
+            stream_data.append(obj.copy())
+            for i, tit in enumerate(output['titles']):
+                obj['type'] = 'paragraph_with_language'
+                obj['value'] = {
+                    'label': '<article-title>' if i == 0 else '<trans-title>',
+                    'paragraph': tit['title'],
+                    'language': tit['language']
+                }
+                stream_data.append(obj.copy())
+
+            for i, auth in enumerate(output['authors']):
+                obj['type'] = 'author_paragraph'
+                obj['value'] = {
+                    'label': '<contrib>',
+                    'surname': auth['surname'],
+                    'given_names': auth['name'],
+                    'orcid': auth['orcid'],
+                    'affid': auth['aff'],
+                    'char': auth['char']
+                }
+                stream_data.append(obj.copy())
+
+            for i, aff in enumerate(output['affiliations']):
+                obj['type'] = 'aff_paragraph'
+                obj['value'] = {
+                    'label': '<aff>',
+                    'affid': aff['aff'],
+                    'char': aff['char'],
+                    'orgname': aff['orgname'],
+                    'orgdiv2': aff['orgdiv2'],
+                    'orgdiv1': aff['orgdiv1'],
+                    'zipcode': aff['postal'],
+                    'city': aff['city'],
+                    'country': aff['name_country'],
+                    'code_country': aff['code_country'],
+                    'state': aff['state'],
+                    'text_aff': aff['text_aff'],
+                    #'original': aff['original']
+                }
+                stream_data.append(obj.copy())
 
         if item.get('text') is None or item.get('text') == '':
             state['label_next'] = state['label_next_reset'] if state['reset'] else state['label_next']
@@ -118,8 +275,6 @@ def get_labels(title, user_id):
     else:
         chunks = split_in_three(obj_reference)
         output=[]
-
-        llm_first_block = LlamaService(mode='prompt', temperature=0.1)
 
         for chunk in chunks:
             if len(chunk) > 0:
