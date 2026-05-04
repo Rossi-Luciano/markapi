@@ -1,27 +1,45 @@
 from django.http import HttpResponseRedirect
-from django.template.response import TemplateResponse
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin import messages
-from wagtail.snippets.models import register_snippet
+from django.contrib import messages
+from django.template.response import TemplateResponse
+from wagtail_modeladmin.options import ModelAdmin
+
 from wagtail.snippets.views.snippets import (
     CreateView,
     EditView,
     SnippetViewSet,
-    SnippetViewSetGroup,
+    SnippetViewSetGroup
 )
-from wagtail_modeladmin.options import ModelAdmin
 
-from markup_doc.models import (
+from markup_doc.models import ( 
     ArticleDocx,
     ArticleDocxMarkup,
+    UploadDocx,
+    MarkupXML,
     CollectionModel,
     JournalModel,
-    MarkupXML,
-    ProcessStatus,
-    UploadDocx,
+    ProcessStatus
 )
-from markup_doc.sync_api import sync_collection_from_api
-from markup_doc.tasks import task_sync_journals_from_api
+
+from config.menu import get_menu_order
+from markup_doc.tasks import get_labels, task_sync_journals_from_api
+from django.urls import path, reverse
+from django.utils.html import format_html
+from wagtail.admin import messages
+from wagtail.admin.views import generic
+
+from django.shortcuts import redirect, get_object_or_404
+from django.views import View
+
+from wagtail.snippets.models import register_snippet
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.db import transaction
+
+from wagtail import hooks
+from django.templatetags.static import static
+from markup_doc.sync_api import sync_collection_from_api, sync_journals_from_api
+
 
 
 class ArticleDocxCreateView(CreateView):
@@ -41,6 +59,7 @@ class ArticleDocxCreateView(CreateView):
         self.object = form.save_all(self.request.user)
         self.object.estatus = ProcessStatus.PROCESSING
         self.object.save()
+        transaction.on_commit(lambda: get_labels.delay(self.object.title, self.request.user.id))
         return HttpResponseRedirect(self.get_success_url())
 
 
