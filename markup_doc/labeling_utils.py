@@ -780,3 +780,59 @@ def create_labeled_object2(i, item, state, sections):
         }
 
     return obj, result, state
+
+
+def get_data_first_block(text, metadata, user_id):
+    payload = {
+        'text': text,
+        'metadata': metadata
+    }
+
+    model = LlamaModel.objects.first()
+
+    if model.name_file:
+        user = User.objects.get(pk=user_id)
+        refresh = RefreshToken.for_user(user)
+        access_token = refresh.access_token
+
+        # FIXME: Hardcoded URL
+        url = "http://django:8000/api/v1/first_block/"    
+
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code == 200:
+        response_json = response.json()
+        message_str = response_json['message']
+
+        resp_json = json.loads(message_str)
+        
+    return resp_json
+
+
+def extract_keywords(text):
+    # Quitar punto final si existe
+    text = text.strip()
+    if text.endswith('.'):
+        text = text[:-1].strip()
+
+    # Ver si contiene una etiqueta con dos puntos
+    match = re.match(r'(?i)\s*(.+?)\s*:\s*(.+)', text)
+    
+    if match:
+        label = match.group(1).strip()
+        content = match.group(2).strip()
+    else:
+        label = None
+        content = text
+
+    # Separar por punto y coma o coma
+    keywords = re.split(r'\s*[;,]\s*', content)
+    clean_keywords = [p.strip() for p in keywords if p.strip()]
+    clean_keywords = ", ".join(keywords)
+
+    return {"title": label, "keywords": clean_keywords}

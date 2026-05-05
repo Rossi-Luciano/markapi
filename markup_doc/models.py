@@ -73,7 +73,7 @@ class ArticleDocx(CommonControlField):
         try:
             obj = cls.get(title=title)
         except (cls.DoesNotExist, ValueError):
-            pass
+            return None
 
         obj.estatus = estatus
         obj.save()
@@ -400,7 +400,7 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         try:
             obj = cls.get(title=title)
         except (cls.DoesNotExist, ValueError):
-            pass
+            return None
 
         obj.estatus = estatus
         obj.save()

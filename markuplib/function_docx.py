@@ -121,7 +121,7 @@ class functionsDocx:
 
     def extractContent(self, doc, doc_path):
 
-        list_types = self.extract_numbering_info(doc_path)
+        list_types = self.extract_numbering_info(doc_path) or {}
 
         hiperlinks_info = self.extract_hiperlinks_info(doc_path)
 
@@ -238,7 +238,11 @@ class functionsDocx:
                 if is_numPr:
                     numPr = paragraph.find('.//w:numPr', namespaces=paragraph.nsmap)
                     numId = numPr.find('.//w:numId', namespaces=paragraph.nsmap).get(namespaces_p + 'val')
-                    type = [(key, objt) for key, objt in list_types.items() if objt['numId'] == numId]
+                    type_matches = [
+                        (key, objt)
+                        for key, objt in list_types.items()
+                        if objt.get('numId') == numId
+                    ]
 
                     #Es una lista diferente
                     if numId != current_num_id:
@@ -251,7 +255,7 @@ class functionsDocx:
                             current_list = []
                             content.append(objl)
                         list_type = 'bullet'
-                        if type[0][1][str(0)] == 'decimal':
+                        if type_matches and type_matches[0][1].get(str(0)) == 'decimal':
                             list_type = 'order'
 
                         current_list.append(f'[list list-type="{list_type}"]')
@@ -415,8 +419,7 @@ class functionsDocx:
                     obj2['value'] = ' '.join(text_paragraph)
                     obj['text'].append(obj2)
                     text_paragraph = []
-
-            if not is_numPr:
-                content.append(obj)
+                if not is_numPr:
+                    content.append(obj)
         sections.sort(key=section_priority)
         return sections, content
