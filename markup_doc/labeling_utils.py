@@ -11,6 +11,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 # Local application imports
 from model_ai.models import LlamaModel
+from .choices import order_labels
 
 
 MODEL_NAME_GEMINI = 'GEMINI'
@@ -836,3 +837,302 @@ def extract_keywords(text):
     clean_keywords = ", ".join(keywords)
 
     return {"title": label, "keywords": clean_keywords}
+
+
+def create_special_content_object(item, stream_data_body, counts):
+    """Create objects for special content types (image, table, list, compound)"""
+    obj = {}
+
+    if item.get('type') == 'image':
+        obj = {}
+        counts['numfig'] += 1
+        obj['type'] = 'image'
+        obj['value'] = {
+                'figid' : f"f{counts['numfig']}",
+                'label' : '<fig>',
+                'image' : item.get('image')
+            }
+        
+         #Obitiene el elemento aterior
+        try:
+            prev_element = stream_data_body[-1]
+            label_title = extract_label_and_title(prev_element['value']['paragraph'])
+            obj['value']['figlabel'] = label_title['label']
+            obj['value']['title'] = label_title['title']
+            stream_data_body.pop(-1)
+        except:
+            pass
+
+    elif item.get('type') == 'table':
+        obj = {}
+        counts['numtab'] += 1
+        obj['type'] = 'table'
+        obj['value'] = {
+            'tabid' : f"t{counts['numtab']}",
+            'label' : '<table>',
+            'content' : item.get('table')
+        }
+
+        #Obitiene el elemento aterior
+        try:
+            prev_element = stream_data_body[-1]
+            label_title = extract_label_and_title(prev_element['value']['paragraph'])
+            obj['value']['tablabel'] = label_title['label']
+            obj['value']['title'] = label_title['title']
+            stream_data_body.pop(-1)
+        except:
+            #No hay elemento anterior
+            pass
+
+    elif item.get('type') == 'list':
+        obj = {}
+        obj['type'] = 'paragraph'
+        obj['value'] = {
+            'label' : '<list>',
+            'paragraph' : item.get('list')
+        }
+    
+    elif item.get('type') == 'compound':
+        obj = {}
+        counts['numeq'] += 1
+        obj['type'] = 'compound_paragraph'
+        obj['value'] = {
+            'eid' : f"e{counts['numeq']}",
+            #'label' : '<formula>',
+            'content': item.get('text')
+        }
+        text_count = sum(
+            1 for c in obj['value']['content']
+            if c['type'] == 'text'
+        )
+        
+        if text_count > 1:
+            obj['value']['label'] = '<inline-formula>'
+            return obj, counts
+
+        if text_count == 0:
+            obj['value']['label'] = '<disp-formula>'
+            return obj, counts
+        
+        text_value = next(
+            item['value']
+            for item in obj['value']['content']
+            if item['type'] == 'text'
+        )
+        text = is_number_parenthesis(text_value)
+        if text:
+            obj['value']['label'] = '<disp-formula>'
+            next(
+                item
+                for item in obj['value']['content']
+                if item['type'] == 'text'
+            )['value'] = text
+        else:
+            obj['value']['label'] = '<inline-formula>'
+
+    return obj, counts
+
+
+def extract_subsection(text):
+    # Quitar punto final si existe
+    text = text.strip()
+
+    # Ver si contiene una etiqueta con dos puntos
+    match = re.match(r'(?i)\s*(.+?)\s*:\s*(.+)', text)
+    
+    if match:
+        label = match.group(1).strip()
+        content = match.group(2).strip()
+    else:
+        label = None
+        content = text
+
+    return {"title": label, "content": content}
+
+
+def search_special_id(data_body, label):
+    for d in data_body: 
+        if d['type'] in ['image', 'table']:
+            data = d['value']
+            clean_label = re.sub(r'^[\s\.,;:–—-]+', '', label).capitalize()
+
+            if d['type'] == 'image':
+                if clean_label == data['figlabel']:
+                    return data.get('figid')
+                if data['figid'][0] == clean_label.lower()[0] and data['figid'][1] in clean_label.lower():
+                    return data.get('figid')
+            
+            if d['type'] == 'table':
+                if clean_label == data['tablabel']:
+                    return data.get('tabid')
+                if data['tabid'][0] == clean_label.lower()[0] and data['tabid'][1] in clean_label.lower():
+                    return data.get('tabid')
+    
+    for d in data_body: 
+        if d['type'] in ['compound_paragraph']:
+            data = d['value']
+            clean_label = re.sub(r'^[\s\.,;:–—-]+', '', label).lower()
+
+            if d['type'] == 'compound_paragraph':
+                if data['eid'][0] in clean_label[0] and data['eid'][1] in clean_label:
+                    return data.get('eid')
+
+    return None
+
+
+def is_number_parenthesis(text):
+    pattern = re.compile(r'^\s*\(\s*(\d+)\s*\)\s*$')
+    match = pattern.fullmatch(text)
+    if match:
+        return f"({match.group(1)})"
+    return None
+
+
+def remove_unpaired_tags(text):
+    # Match opening/closing tags, capturing only the tag name (before any space or >)
+    pattern = re.compile(r'<(/?)([a-zA-Z0-9]+)(?:\s[^>]*)?>')
+    
+    result = []
+    stack = []  # Stores (tag_name, position_in_result)
+    
+    i = 0
+    for match in pattern.finditer(text):
+        is_closing, tag_name = match.groups()
+        is_closing = bool(is_closing)
+        
+        # Text between tags
+        if match.start() > i:
+            result.append(text[i:match.start()])
+        
+        tag_text = text[match.start():match.end()]
+        
+        if not is_closing:
+            # Opening tag
+            stack.append((tag_name, len(result)))
+            result.append(tag_text)
+        else:
+            # Closing tag
+            if stack and stack[-1][0] == tag_name:
+                stack.pop()
+                result.append(tag_text)
+            else:
+                # Orphan closing tag - skip
+                pass
+        
+        i = match.end()
+    
+    # Append remaining text
+    if i < len(text):
+        result.append(text[i:])
+    
+    # Remove unclosed opening tags
+    for tag_name, pos in sorted(stack, reverse=True, key=lambda x: x[1]):
+        result.pop(pos)
+    
+    return ''.join(result)
+
+
+def append_fragment(node_dest, val):
+    if not val:
+        parent = node_dest.getparent()
+        if parent:
+            parent.remove(node_dest)
+        return
+
+    # 1) Limpiezas mínimas
+    #    - eliminar <br> / <br/>
+    #    - quitar saltos de línea
+    clean = re.sub(r"(?i)<br\s*/?>", "", val)
+    clean = clean.replace("\n", "")
+
+    # normaliza entidades problemáticas
+    clean = clean.replace("&nbsp;", " ")
+    clean = re.sub(r'&(?!\w+;|#\d+;)', '&amp;', clean)
+
+    clean = remove_unpaired_tags(clean)
+
+    if clean == "":
+        parent = node_dest.getparent()
+        if parent:
+            parent.remove(node_dest)
+        return
+
+    # 2) Si no hay etiquetas, es texto plano
+    if "<" not in clean:
+        node_dest.text = (node_dest.text or "") + clean
+        return
+
+    # 3) Envolver para que sea XML bien formado aunque empiece con texto
+    wrapper = etree.XML(f"<_wrap_>{clean}</_wrap_>")
+
+    # 4) Pasar el texto inicial (antes del primer tag)
+    if wrapper.text:
+        node_dest.text = (node_dest.text or "") + wrapper.text
+
+    # 5) Mover cada hijo al destino (sus .tail se conservan)
+    for child in list(wrapper):
+        node_dest.append(child)
+
+
+def extract_label_and_title(text):
+    """
+    Extrae el Label (Figura/Figure/Tabla/Table/Tabela + número) y el Title (resto del texto limpio).
+    Ignora mayúsculas y minúsculas y limpia puntuación/espacios entre el número y el título.
+    """
+    # Acepta Figura/Figure y Tabla/Table/Tabela
+    pattern = r'\b(Imagen|Imágen|Image|Imagem|Figura|Figure|Tabla|Table|Tabela)\s+(\d+)\b'
+    match = re.search(pattern, text, re.IGNORECASE)
+
+    if match:
+        word = match.group(1).capitalize()   # Normaliza capitalización
+        number = match.group(2)
+        label = f"{word} {number}"
+
+        # Texto después del número
+        rest = text[match.end():]
+
+        # Quita puntuación/espacios iniciales (.,;: guiones, etc.)
+        rest_clean = re.sub(r'^[\s\.,;:–—-]+', '', rest)
+
+        return {"label": label, "title": rest_clean.strip()}
+    else:
+        return {"label": None, "title": text.strip()}
+
+
+def proccess_special_content(text, data_body):
+    # normaliza espacios no separables por si acaso
+    text = re.sub(r'[\u00A0\u2007\u202F]', ' ', text)
+
+    pattern = r"""
+        (?<!\w)                                   # inicio no al medio de una palabra
+        (?:
+            Imagen|Imágen|Image|Imagem|
+            Figura|Figure|
+            Tabla|Table|Tabela|
+            Ecuaci[oó]n|Equa(?:ç[aã]o|cao)|Equation|
+            F[oó]rmula|Formula|
+            Eq\.|Ec\.|Form\.|F[óo]rm\.
+        )\s*
+        (?:\(\s*\d+\s*\)|\d+)                     # 1  o  (1)
+        (?!\w)                                    # que no siga una letra/número
+    """
+
+    res = []
+    dict_type = {'f': 'fig', 't': 'table', 'e': 'disp-formula'}
+
+    try:
+        for match in re.finditer(pattern, text, re.IGNORECASE | re.UNICODE | re.VERBOSE):
+            label = match.group(0)
+            
+            id = search_special_id(data_body, label)
+            
+            res.append({
+                "label": label,
+                "id": id,
+                "reftype": dict_type.get(id[0].lower(), 'other')
+            })
+    except Exception as exc:
+        print(f'ERROR proccess_special_content: {exc}')
+        pass
+
+    return res
