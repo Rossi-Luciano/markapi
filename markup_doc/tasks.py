@@ -16,7 +16,8 @@ from markup_doc.labeling_utils import (
     extract_keywords,
     create_labeled_object2,
     get_data_first_block,
-    get_llm_model_name
+    get_llm_model_name,
+    create_special_content_object
 )
 
 from markup_doc.models import ProcessStatus
@@ -42,7 +43,7 @@ def clean_labels(text):
 
     # Quitar espacios al principio y final
     return text.strip()
-    
+
 
 @celery_app.task()
 def task_sync_journals_from_api():
@@ -224,6 +225,11 @@ def get_labels(title, user_id):
                     #'original': aff['original']
                 }
                 stream_data.append(obj.copy())
+        
+        if item.get('type') in ['image', 'table', 'list', 'compound']:
+            obj, counts = create_special_content_object(item, stream_data_body, counts)
+            stream_data_body.append(obj)
+            continue
 
         if item.get('text') is None or item.get('text') == '':
             state['label_next'] = state['label_next_reset'] if state['reset'] else state['label_next']
