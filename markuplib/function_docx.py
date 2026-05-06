@@ -360,12 +360,15 @@ class functionsDocx:
                     obj['formula'] = etree.tostring(mathml_root, pretty_print=True, encoding='unicode')
 
 
-                if not obj_image:
-                    paragraph = element
-                    text_paragraph = []
-
-                    # Determina si es parte de una lista
-                    is_numPr = paragraph.find('.//w:numPr', namespaces=paragraph.nsmap) is not None
+                # obtiene id y nivel
+                if is_numPr:
+                    numPr = paragraph.find('.//w:numPr', namespaces=paragraph.nsmap)
+                    numId = numPr.find('.//w:numId', namespaces=paragraph.nsmap).get(namespaces_p + 'val')
+                    type_matches = [
+                        (key, objt)
+                        for key, objt in list_types.items()
+                        if objt.get('numId') == numId
+                    ]
 
                     # obtiene id y nivel
                     if is_numPr:
@@ -397,6 +400,76 @@ class functionsDocx:
                             objl['list'] = '\n'.join(current_list)
                             current_list = []
                             content.append(objl)
+                        list_type = 'bullet'
+                        if type_matches and type_matches[0][1].get(str(0)) == 'decimal':
+                            list_type = 'order'
+
+                        current_list.append(f'[list list-type="{list_type}"]')
+                else:
+                    #Se terminaron de agregar elementos a la lista
+                    if len(current_list) > 0:
+                        current_list.append('[/list]')
+                        objl = {}
+                        objl['type'] = 'list'
+                        objl['list'] = '\n'.join(current_list)
+                        current_list = []
+                        content.append(objl)
+
+                for child in paragraph:
+                    if child.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink':
+                        for r in child.findall('w:r', namespaces=child.nsmap):
+                            t_elem = r.find('w:t', namespaces=child.nsmap)
+                            if t_elem is not None and t_elem.text:
+                                text_paragraph.append(t_elem.text)
+
+                    elif child.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}r':
+                        namespaces = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
+                        sz_element = child.find('.//w:sz', namespaces=child.nsmap)
+                        obj['font_size'] = 0
+
+                        if sz_element is None:
+                            p_pr = paragraph.find('.//w:rPr/w:sz', namespaces=child.nsmap)
+                            if p_pr is not None:
+                                sz_element = p_pr.find('.//w:pPr', namespaces=child.nsmap)
+
+                        if sz_element is not None:
+                            xml_string = etree.tostring(sz_element, pretty_print=True, encoding='unicode')
+                            size_element = objectify.fromstring(xml_string)
+                            font_size_value = size_element.get(namespaces+'val')
+                            obj['font_size'] = int(font_size_value)/2
+
+                        color_element = child.find('.//w:color', namespaces=child.nsmap)
+
+                        if color_element is None:
+                            p_pr = paragraph.find('.//w:pPr', namespaces=child.nsmap)
+                            if p_pr is not None:
+                                color_element = p_pr.find('.//w:rPr/w:color', namespaces=child.nsmap)
+
+                        if color_element is not None:
+                            xml_string_color = etree.tostring(color_element, pretty_print=True, encoding='unicode')
+                            object_element = objectify.fromstring(xml_string_color)
+                            color_value = object_element.get(namespaces + 'val')
+                            obj['color'] = color_value
+
+                        b_tag = child.find('.//w:b', namespaces=child.nsmap)
+
+                        if b_tag is None:
+                            p_pr = paragraph.find('.//w:rPr/w:b', namespaces=child.nsmap)
+                            if p_pr is not None:
+                                b_tag = p_pr.find('.//w:pPr', namespaces=child.nsmap)
+
+                        if b_tag is not None:
+                            val = b_tag.get('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}val')
+                            obj['bold'] = (val is None or val in ['1', 'true', 'True'])
+                        else:
+                            obj['bold'] = False
+
+                        i_tag = child.find('.//w:i', namespaces=child.nsmap)
+
+                        if i_tag is None:
+                            p_pr = paragraph.find('.//w:rPr/w:i', namespaces=child.nsmap)
+                            if p_pr is not None:
+                                i_tag = p_pr.find('.//w:pPr', namespaces=child.nsmap)
 
                     for child in paragraph:
                         if child.tag == '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}hyperlink':
@@ -575,13 +648,17 @@ class functionsDocx:
                     'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
                 }
 
-                table = element
-                table_data = extrae_Tabla(element, hiperlinks_info, namespaces)
-                obj = {}
-                obj['type'] = 'table'
-                obj['table'] = table_data
-
-            if not is_numPr:
-                content.append(obj)
+                    if is_numPr:
+                        if 'font_size' in obj:
+                            del obj['font_size']
+                        current_list.append(f'[list-item]{obj["text"]}[/list-item]')
+                if isinstance(obj['text'], list) and len(text_paragraph) > 0:
+                    obj2 = {}
+                    obj2['type'] = 'text'
+                    obj2['value'] = ' '.join(text_paragraph)
+                    obj['text'].append(obj2)
+                    text_paragraph = []
+                if not is_numPr:
+                    content.append(obj)
         sections.sort(key=section_priority)
         return sections, content
