@@ -1,29 +1,19 @@
-import os
-import sys
-import requests
-
-from django.db import models
-from django.utils.translation import gettext_lazy as _
 from django import forms
-from django.utils.html import format_html
+from django.db import models
 from django.urls import reverse
-
-from modelcluster.fields import ParentalKey
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, InlinePanel, ObjectList, TabbedInterface
-from wagtailautocomplete.edit_handlers import AutocompletePanel
-from wagtail.documents.models import Document
-
-from core.forms import CoreAdminModelForm
-from core.choices import LANGUAGE
-from core.models import (
-    CommonControlField,
-    Language,
-    TextWithLang
-)
+from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
+from wagtail.blocks import ChoiceBlock, StreamBlock, StructBlock, TextBlock
 from wagtail.fields import StreamField
-from wagtail.blocks import StructBlock, TextBlock, CharBlock, ChoiceBlock, ListBlock, StreamBlock
 from wagtail.images.blocks import ImageChooserBlock
+from wagtailautocomplete.edit_handlers import AutocompletePanel
+
+from core.choices import LANGUAGE
+from core.forms import CoreAdminModelForm
+from core.models import CommonControlField
+
 from .choices import front_labels
 
 
@@ -36,26 +26,28 @@ class ReadOnlyFileWidget(forms.Widget):
     def render(self, name, value, attrs=None, renderer=None):
         if value:
             # Muestra el archivo como un enlace de descarga
-            #return format_html('<a href="{}" target="_blank" download>{}</a>', value.url, value.name.split('/')[-1])
+            # return format_html('<a href="{}" target="_blank" download>{}</a>', value.url, value.name.split('/')[-1])
             instance = value.instance
-            url = reverse('generate_xml', args=[instance.pk])
-            return format_html('<a href="{}" target="_blank" download>Download XML</a>', url)
+            url = reverse("generate_xml", args=[instance.pk])
+            return format_html(
+                '<a href="{}" target="_blank" download>Download XML</a>', url
+            )
         return ""
 
-# Create your models here.
+
 class ArticleDocx(CommonControlField):
     title = models.TextField(_("Document Title"), null=True, blank=True)
     file = models.FileField(
         null=True,
         blank=True,
         verbose_name=_("Document"),
-        upload_to='uploads_docx/',
+        upload_to="uploads_docx/",
     )
     estatus = models.IntegerField(
         _("Process estatus"),
         choices=ProcessStatus.choices,
         blank=True,
-        default=ProcessStatus.PROCESSING
+        default=ProcessStatus.PROCESSING,
     )
 
     panels = [
@@ -69,12 +61,11 @@ class ArticleDocx(CommonControlField):
         return f"{self.title} | {self.estatus}"
 
     def __str__(self):
-        return f"{self.title} | {self.estatus}"
+        title = self.title or ""
+        return f"{title} | {self.estatus}"
 
     @classmethod
-    def get(
-        cls,
-        title):
+    def get(cls, title):
         return cls.objects.get(title=title)
 
     @classmethod
@@ -82,7 +73,7 @@ class ArticleDocx(CommonControlField):
         try:
             obj = cls.get(title=title)
         except (cls.DoesNotExist, ValueError):
-            pass
+            return None
 
         obj.estatus = estatus
         obj.save()
@@ -90,16 +81,8 @@ class ArticleDocx(CommonControlField):
 
 
 class ParagraphWithLanguageBlock(StructBlock):
-    label = ChoiceBlock(
-                choices=front_labels,
-                required=False,
-                label=_("Label")
-            )
-    language = ChoiceBlock(
-        choices=LANGUAGE,
-        required=False,
-        label="Language"
-    )
+    label = ChoiceBlock(choices=front_labels, required=False, label=_("Label"))
+    language = ChoiceBlock(choices=LANGUAGE, required=False, label="Language")
     paragraph = TextBlock(required=False, label=_("Title"))
 
     class Meta:
@@ -107,11 +90,7 @@ class ParagraphWithLanguageBlock(StructBlock):
 
 
 class ParagraphBlock(StructBlock):
-    label = ChoiceBlock(
-                choices=front_labels,
-                required=False,
-                label=_("Label")
-            )
+    label = ChoiceBlock(choices=front_labels, required=False, label=_("Label"))
     paragraph = TextBlock(required=False, label=_("Paragraph"))
 
     class Meta:
@@ -119,27 +98,23 @@ class ParagraphBlock(StructBlock):
 
 
 class CompoundParagraphBlock(StructBlock):
-    label = ChoiceBlock(
-                choices=front_labels,
-                required=False,
-                label=_("Label")
-            )
+    label = ChoiceBlock(choices=front_labels, required=False, label=_("Label"))
     eid = TextBlock(required=False, label=_("Equation id"))
-    content = StreamBlock([
-        ('text', TextBlock(label=_("Text"))),
-        ('formula', TextBlock(label=_("Formula"))),
-    ], label=_("Content"), required=True)
+    content = StreamBlock(
+        [
+            ("text", TextBlock(label=_("Text"))),
+            ("formula", TextBlock(label=_("Formula"))),
+        ],
+        label=_("Content"),
+        required=True,
+    )
 
     class Meta:
         label = _("Compound paragraph")
 
 
 class ImageBlock(StructBlock):
-    label = ChoiceBlock(
-                choices=front_labels,
-                required=False,
-                label=_("Label")
-            )
+    label = ChoiceBlock(choices=front_labels, required=False, label=_("Label"))
     figid = TextBlock(required=False, label=_("Fig id"))
     figlabel = TextBlock(required=False, label=_("Fig label"))
     title = TextBlock(required=False, label=_("Title"))
@@ -151,11 +126,7 @@ class ImageBlock(StructBlock):
 
 
 class TableBlock(StructBlock):
-    label = ChoiceBlock(
-                choices=front_labels,
-                required=False,
-                label=_("Label")
-            )
+    label = ChoiceBlock(choices=front_labels, required=False, label=_("Label"))
     tabid = TextBlock(required=False, label=_("Table id"))
     tablabel = TextBlock(required=False, label=_("Table label"))
     title = TextBlock(required=False, label=_("Title"))
@@ -202,10 +173,14 @@ class RefNameBlock(StructBlock):
 class RefParagraphBlock(ParagraphBlock):
     reftype = TextBlock(required=False, label=_("Ref type"))
     refid = TextBlock(required=False, label=_("Ref id"))
-    #authors = ListBlock(RefNameBlock(), label=_("Authors"))
-    authors = StreamBlock([
-        ('Author', RefNameBlock()),
-    ], label=_("Authors"), required=False)
+    # authors = ListBlock(RefNameBlock(), label=_("Authors"))
+    authors = StreamBlock(
+        [
+            ("Author", RefNameBlock()),
+        ],
+        label=_("Authors"),
+        required=False,
+    )
     date = TextBlock(required=False, label=_("Date"))
     title = TextBlock(required=False, label=_("Title"))
     chapter = TextBlock(required=False, label=_("Chapter"))
@@ -245,7 +220,9 @@ class CollectionValuesModel(models.Model):
 
 
 class CollectionModel(models.Model):
-    collection = models.ForeignKey(CollectionValuesModel, null=True, blank=True, on_delete=models.SET_NULL)
+    collection = models.ForeignKey(
+        CollectionValuesModel, null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     autocomplete_search_field = "collection.acron"
 
@@ -253,11 +230,14 @@ class CollectionModel(models.Model):
         return str(self)
 
     panels = [
-        AutocompletePanel('collection'),
+        AutocompletePanel("collection"),
     ]
 
     def __str__(self):
-        return f"{self.collection.acron.upper()} - {self.collection.acron}"
+        if not self.collection:
+            return ""
+        acron = self.collection.acron or ""
+        return f"{acron.upper()} - {acron}"
 
 
 class JournalModel(models.Model):
@@ -273,21 +253,21 @@ class JournalModel(models.Model):
     autocomplete_search_field = "title"
 
     class Meta:
-        unique_together = ('title',)
+        unique_together = ("title",)
 
     def autocomplete_label(self):
         return str(self)
 
     def __str__(self):
-        return self.title
+        return self.title or ""
 
 
 def get_default_collection_acron():
     try:
-        obj = CollectionModel.objects.select_related('collection').first()
-        return obj.collection.acron if obj and obj.collection else ''
+        obj = CollectionModel.objects.select_related("collection").first()
+        return obj.collection.acron if obj and obj.collection else ""
     except Exception:
-        return ''
+        return ""
 
 
 class ArticleDocxMarkup(CommonControlField, ClusterableModel):
@@ -296,17 +276,19 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         null=True,
         blank=True,
         verbose_name=_("Document"),
-        upload_to='uploads_docx/',
+        upload_to="uploads_docx/",
     )
     estatus = models.IntegerField(
         _("Process estatus"),
         choices=ProcessStatus.choices,
         blank=True,
-        default=ProcessStatus.PROCESSING
+        default=ProcessStatus.PROCESSING,
     )
 
     collection = models.CharField(max_length=10, default=get_default_collection_acron)
-    journal = models.ForeignKey(JournalModel, null=True, blank=True, on_delete=models.SET_NULL)
+    journal = models.ForeignKey(
+        JournalModel, null=True, blank=True, on_delete=models.SET_NULL
+    )
 
     journal_title = models.TextField(_("Journal Title"), null=True, blank=True)
     acronym = models.TextField(_("Acronym"), null=True, blank=True)
@@ -318,31 +300,14 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
     nimtitle = models.TextField(_("Nimtitle"), null=True, blank=True)
     pubname = models.TextField(_("Publisher Name"), null=True, blank=True)
     license = models.URLField(
-        max_length=500,
-        blank=True,
-        null=True,
-        verbose_name=_("License (URL)")
+        max_length=500, blank=True, null=True, verbose_name=_("License (URL)")
     )
-    vol = models.IntegerField(
-        verbose_name=_("Volume"),
-        null=True,
-        blank=True
-    )
+    vol = models.IntegerField(verbose_name=_("Volume"), null=True, blank=True)
     supplvol = models.IntegerField(
-        verbose_name=_("Suppl Volume"),
-        null=True,
-        blank=True
+        verbose_name=_("Suppl Volume"), null=True, blank=True
     )
-    issue = models.IntegerField(
-        verbose_name=_("Issue"),
-        null=True,
-        blank=True
-    )
-    supplno = models.IntegerField(
-        verbose_name=_("Suppl Num"),
-        null=True,
-        blank=True
-    )
+    issue = models.IntegerField(verbose_name=_("Issue"), null=True, blank=True)
+    supplno = models.IntegerField(verbose_name=_("Suppl Num"), null=True, blank=True)
     issid_part = models.TextField(_("Isid Part"), null=True, blank=True)
     dateiso = models.TextField(_("Dateiso"), null=True, blank=True)
     month = models.TextField(_("Month/Season"), null=True, blank=True)
@@ -354,11 +319,7 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
     pagcount = models.TextField(_("Pag count"), null=True, blank=True)
     doctopic = models.TextField(_("Doc Topic"), null=True, blank=True)
     language = models.CharField(
-        _("Language"),
-        max_length=10,
-        choices=LANGUAGE,
-        null=True,
-        blank=True
+        _("Language"), max_length=10, choices=LANGUAGE, null=True, blank=True
     )
     spsversion = models.TextField(_("Sps version"), null=True, blank=True)
     artdate = models.DateField(_("Artdate"), null=True, blank=True)
@@ -368,60 +329,70 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         null=True,
         blank=True,
         verbose_name=_("Document xml"),
-        upload_to='generate_xml/',
+        upload_to="generate_xml/",
     )
 
     text_xml = models.TextField(_("Text XML"), null=True, blank=True)
 
-    content = StreamField([
-        ('paragraph_with_language', ParagraphWithLanguageBlock()),
-        ('paragraph', ParagraphBlock()),
-        ('author_paragraph', AuthorParagraphBlock()),
-        ('aff_paragraph', AffParagraphBlock()),
-    ], blank=True, use_json_field=True)
+    content = StreamField(
+        [
+            ("paragraph_with_language", ParagraphWithLanguageBlock()),
+            ("paragraph", ParagraphBlock()),
+            ("author_paragraph", AuthorParagraphBlock()),
+            ("aff_paragraph", AffParagraphBlock()),
+        ],
+        blank=True,
+        use_json_field=True,
+    )
 
-    content_body = StreamField([
-        ('paragraph', ParagraphBlock()),
-        ('paragraph_with_language', ParagraphWithLanguageBlock()),
-        ('compound_paragraph', CompoundParagraphBlock()),
-        ('image', ImageBlock()),
-        ('table', TableBlock()),
-    ], blank=True, use_json_field=True)
+    content_body = StreamField(
+        [
+            ("paragraph", ParagraphBlock()),
+            ("paragraph_with_language", ParagraphWithLanguageBlock()),
+            ("compound_paragraph", CompoundParagraphBlock()),
+            ("image", ImageBlock()),
+            ("table", TableBlock()),
+        ],
+        blank=True,
+        use_json_field=True,
+    )
 
-    content_back = StreamField([
-        ('paragraph', ParagraphBlock()),
-        ('ref_paragraph', RefParagraphBlock()),
-    ], blank=True, use_json_field=True)
+    content_back = StreamField(
+        [
+            ("paragraph", ParagraphBlock()),
+            ("ref_paragraph", RefParagraphBlock()),
+        ],
+        blank=True,
+        use_json_field=True,
+    )
 
     panels = [
         FieldPanel("title"),
         FieldPanel("file"),
         FieldPanel("collection"),
-        AutocompletePanel("journal")
+        AutocompletePanel("journal"),
     ]
 
     def __unicode__(self):
         return f"{self.title} | {self.estatus}"
 
     def __str__(self):
-        return f"{self.title} | {self.estatus}"
+        title = self.title or ""
+        return f"{title} | {self.estatus}"
 
     @property
     def url_download(self):
         return self.file_xml.url if self.file_xml else None
 
     @classmethod
-    def create(cls, title, doi):
+    def create(cls, title):
         obj = cls()
         obj.title = title
-        obj.doi = doi
         obj.save()
         return obj
 
     @classmethod
-    def get(
-        cls,
-        title):
+    def get(cls, title):
         return cls.objects.get(title=title)
 
     @classmethod
@@ -429,7 +400,7 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         try:
             obj = cls.get(title=title)
         except (cls.DoesNotExist, ValueError):
-            pass
+            return None
 
         obj.estatus = estatus
         obj.save()
@@ -456,55 +427,54 @@ class UploadDocx(ArticleDocxMarkup):
 
 class MarkupXML(ArticleDocxMarkup):
     panels_front = [
-        FieldPanel('content'),
-        #InlinePanel("element_docx", label=_("Elements Docx")),
+        FieldPanel("content"),
+        # InlinePanel("element_docx", label=_("Elements Docx")),
     ]
 
     panels_body = [
-        FieldPanel('content_body'),
+        FieldPanel("content_body"),
     ]
 
     panels_back = [
-        FieldPanel('content_back'),
+        FieldPanel("content_back"),
     ]
 
     panels_xml = [
-        FieldPanel('file_xml', widget=ReadOnlyFileWidget()),
-        FieldPanel('text_xml'),
+        FieldPanel("file_xml", widget=ReadOnlyFileWidget()),
+        FieldPanel("text_xml"),
     ]
 
     panels_details = [
-        FieldPanel('collection'),
-        AutocompletePanel('journal'),
-        FieldPanel('journal_title'),
-        FieldPanel('short_title'),
-        FieldPanel('title_nlm'),
-        FieldPanel('acronym'),
-        FieldPanel('issn'),
-        FieldPanel('pissn'),
-        FieldPanel('eissn'),
-        FieldPanel('nimtitle'),
-        FieldPanel('pubname'),
-        FieldPanel('license'),
-        FieldPanel('vol'),
-        FieldPanel('supplvol'),
-        FieldPanel('issue'),
-        FieldPanel('supplno'),
-        FieldPanel('issid_part'),
-
-        FieldPanel('dateiso'),
-        FieldPanel('month'),
-        FieldPanel('fpage'),
-        FieldPanel('seq'),
-        FieldPanel('lpage'),
-        FieldPanel('elocatid'),
-        FieldPanel('order'),
-        FieldPanel('pagcount'),
-        FieldPanel('doctopic'),
-        FieldPanel('language'),
-        FieldPanel('spsversion'),
-        FieldPanel('artdate'),
-        FieldPanel('ahpdate'),
+        FieldPanel("collection"),
+        AutocompletePanel("journal"),
+        FieldPanel("journal_title"),
+        FieldPanel("short_title"),
+        FieldPanel("title_nlm"),
+        FieldPanel("acronym"),
+        FieldPanel("issn"),
+        FieldPanel("pissn"),
+        FieldPanel("eissn"),
+        FieldPanel("nimtitle"),
+        FieldPanel("pubname"),
+        FieldPanel("license"),
+        FieldPanel("vol"),
+        FieldPanel("supplvol"),
+        FieldPanel("issue"),
+        FieldPanel("supplno"),
+        FieldPanel("issid_part"),
+        FieldPanel("dateiso"),
+        FieldPanel("month"),
+        FieldPanel("fpage"),
+        FieldPanel("seq"),
+        FieldPanel("lpage"),
+        FieldPanel("elocatid"),
+        FieldPanel("order"),
+        FieldPanel("pagcount"),
+        FieldPanel("doctopic"),
+        FieldPanel("language"),
+        FieldPanel("spsversion"),
+        FieldPanel("artdate"),
+        FieldPanel("ahpdate"),
     ]
 
     edit_handler = TabbedInterface(

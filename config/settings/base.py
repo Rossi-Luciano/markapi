@@ -302,5 +302,18 @@ SIMPLE_JWT = {
 LLAMA_ENABLED = env.bool("LLAMA_ENABLED", default=True)
 MODEL_LLAMA = "llama-3.2-3b-instruct-q4_k_m.gguf"
 
+# Core API
+CORE_API_DOMAIN = env("CORE_API_DOMAIN", default="https://core.scielo.org")
+CORE_COLLECTION_API_ENDPOINT = env(
+    "CORE_COLLECTION_API_ENDPOINT",
+    default="/api/v2/pid/collection/",
+)
+CORE_JOURNAL_API_ENDPOINT = env(
+    "CORE_JOURNAL_API_ENDPOINT",
+    default="/api/v2/pid/journal/",
+)
+CORE_COLLECTION_API_URL = f"{CORE_API_DOMAIN}{CORE_COLLECTION_API_ENDPOINT}"
+CORE_JOURNAL_API_URL = f"{CORE_API_DOMAIN}{CORE_JOURNAL_API_ENDPOINT}"
+
 #Aumento en el límite de campos
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
