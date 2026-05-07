@@ -648,10 +648,10 @@ class functionsDocx:
                     'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
                 }
 
-                    if is_numPr:
-                        if 'font_size' in obj:
-                            del obj['font_size']
-                        current_list.append(f'[list-item]{obj["text"]}[/list-item]')
+                if is_numPr:
+                    if 'font_size' in obj:
+                        del obj['font_size']
+                    current_list.append(f'[list-item]{obj["text"]}[/list-item]')
                 if isinstance(obj['text'], list) and len(text_paragraph) > 0:
                     obj2 = {}
                     obj2['type'] = 'text'
