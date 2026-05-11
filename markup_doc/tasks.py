@@ -8,7 +8,7 @@ import re
 # Third-party imports
 import langid
 
-from markup_doc.models import UploadDocx
+from markup_doc.models import UploadDocx, MarkupXML
 from markup_doc.labeling_utils import (
     split_in_three,
     process_reference,
@@ -26,6 +26,7 @@ from markuplib.function_docx import functionsDocx
 from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
 from markup_doc.sync_api import sync_journals_from_api
+from markup_doc.xml import get_xml
 
 
 def clean_labels(text):
@@ -304,3 +305,26 @@ def get_labels(title, user_id):
     article_docx.estatus = ProcessStatus.PROCESSED
     article_docx.save()
 
+    xml, stream_data_body = get_xml(article_docx, stream_data, stream_data_body, stream_data_back)
+    article_docx_markup.content_body = stream_data_body
+
+    # Guardar el XML
+    article_docx_markup.text_xml = xml
+    article_docx.save()
+
+
+@celery_app.task()
+def update_xml(instance_id, instance_content, instance_content_body, instance_content_back):
+    instance = MarkupXML.objects.get(id=instance_id)
+    content_head = instance_content
+    content_body_dict = instance_content_body
+    xml, stream_data_body = get_xml(instance, content_head, content_body_dict, instance_content_back)
+
+    instance.content_body = stream_data_body
+    # Guardar el XML en el campo `file_xml`
+    #archive_xml = ContentFile(xml)  # Crea un archivo temporal en memoria
+    instance.estatus = ProcessStatus.PROCESSED
+    #instance.file_xml.save("archivo.xml", archive_xml)  # Guarda en el campo `file_xml`
+    instance.text_xml = xml
+
+    instance.save()

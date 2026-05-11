@@ -30,6 +30,26 @@ from markup_doc.sync_api import sync_collection_from_api
 
 
 
+@hooks.register('register_admin_urls')
+def register_admin_urls():
+    return [
+        path('download-xml/<int:id_registro>/', views.generate_xml, name='generate_xml'),
+        path('extract-citation/', views.extract_citation, name='extract_citation'),
+        path('get_journal/', views.get_journal, name='get_journal'),
+        path('download-zip/', views.generate_zip, name='generate_zip'),
+        path('preview-html/', views.preview_html_post, name='preview_html_post'),
+        path('pretty-xml/', views.preview_xml_tree, name='preview_xml_tree'),
+    ]
+
+
+@hooks.register('insert_editor_js')
+def xref_js():
+    return format_html(
+        '<script src="{}"></script>',
+        static('js/xref-button.js')
+    )
+
+
 class ArticleDocxCreateView(CreateView):
     # def get_form_class(self):
     def dispatch(self, request, *args, **kwargs):
@@ -55,6 +75,7 @@ class ArticleDocxEditView(EditView):
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
         form.instance.save()
+        update_xml.delay(form.instance.id, form.instance.content.get_prep_value(), form.instance.content_body.get_prep_value(), form.instance.content_back.get_prep_value())
         return HttpResponseRedirect(self.get_success_url())
 
 
