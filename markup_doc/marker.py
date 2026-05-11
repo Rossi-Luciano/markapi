@@ -8,12 +8,17 @@ from model_ai.llama import LlamaService, LlamaInputSettings
 def mark_article(text, metadata):
     if metadata == 'author':
         messages, response_format = LlamaInputSettings.get_author_config()
-    if metadata == 'affiliation':
+    elif metadata == 'affiliation':
         messages, response_format = LlamaInputSettings.get_affiliations()
-    if metadata == 'doi':
+    elif metadata == 'doi':
         messages, response_format = LlamaInputSettings.get_doi_and_section()
-    if metadata == 'title':
+    elif metadata == 'title':
         messages, response_format = LlamaInputSettings.get_titles()
+    else:
+        raise ValueError(
+            f"Unsupported metadata value: {metadata!r}. "
+            "Expected one of: 'author', 'affiliation', 'doi', 'title'."
+        )
 
     gll = LlamaService(messages, response_format)
     output = gll.run(text)

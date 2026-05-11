@@ -35,8 +35,8 @@ class LlamaService:
 
     model_ai = LlamaModel.objects.first()
 
-    # Try to use Gemini if configured
-    if not model_ai and model_ai.api_key_gemini:
+    # Initialize local LLaMA only when Gemini is not configured
+    if not model_ai or not model_ai.api_key_gemini:
 
       if not LLAMA_ENABLED:
         raise LlamaDisabledError("LLaMA is disabled in settings.")
