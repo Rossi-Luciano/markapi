@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.11-bullseye
+ARG PYTHON_VERSION=3.12-bookworm
 
 # define an alias for the specfic python version used in this file.
 FROM python:${PYTHON_VERSION} AS python
@@ -20,11 +20,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libopenblas-dev \
   libomp-dev
 
-# Instalar gcc-10 y g++-10 en Debian Bullseye
 RUN apt-get update && \
-    apt-get install -y gcc-10 g++-10 ninja-build cmake && \
-    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 50 && \
-    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 50 && \
+    apt-get install -y ninja-build cmake && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Actualizar pip, setuptools y wheel antes de instalar dependencias
@@ -55,7 +52,11 @@ ENV BUILD_ENV ${BUILD_ENVIRONMENT}
 
 WORKDIR ${APP_HOME}
 
-RUN sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
+RUN if [ -f /etc/apt/sources.list ]; then \
+      sed -i 's/main/main contrib non-free/' /etc/apt/sources.list; \
+    elif [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources; \
+    fi
 
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \

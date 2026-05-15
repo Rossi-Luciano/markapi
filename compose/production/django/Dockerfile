@@ -1,4 +1,4 @@
-ARG PYTHON_VERSION=3.11-bullseye
+ARG PYTHON_VERSION=3.12-bookworm
 
 # define an alias for the specfic python version used in this file.
 FROM python:${PYTHON_VERSION} as python
@@ -44,7 +44,11 @@ WORKDIR ${APP_HOME}
 RUN addgroup --system django \
     && adduser --system --ingroup django django
 
-RUN sed -i 's/main/main contrib non-free/' /etc/apt/sources.list
+RUN if [ -f /etc/apt/sources.list ]; then \
+      sed -i 's/main/main contrib non-free/' /etc/apt/sources.list; \
+    elif [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+      sed -i 's/Components: main/Components: main contrib non-free non-free-firmware/' /etc/apt/sources.list.d/debian.sources; \
+    fi
     
 # Install required system dependencies
 RUN apt-get update && apt-get install --no-install-recommends -y \
