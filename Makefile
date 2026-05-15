@@ -78,10 +78,19 @@ django_bash: ## Open a bash terminar from django container using $(compose)
 	@docker compose -f $(compose) run --rm django bash
 
 django_test: ## Run tests from django container using $(compose)
-	@docker compose -f $(compose) run --rm django python manage.py test
+	@docker compose -f $(compose) run --rm django python manage.py test --settings=config.settings.test
 
 django_fast: ## Run tests fast from django container using $(compose)
-	@docker compose -f $(compose) run --rm django python manage.py test --failfast
+	@docker compose -f $(compose) run --rm django python manage.py test --settings=config.settings.test --failfast
+
+pytest: ## Run pytest from django container using $(compose)
+	@docker compose -f $(compose) run --rm django pytest
+
+pytest_fast: ## Run pytest stopping on first failure using $(compose)
+	@docker compose -f $(compose) run --rm django pytest -x
+
+pytest_cov: ## Run pytest with coverage report using $(compose)
+	@docker compose -f $(compose) run --rm django pytest --cov --cov-report=term-missing
 
 django_makemigrations: ## Run makemigrations from django container using $(compose)
 	@docker compose -f $(compose) run --rm django python manage.py makemigrations
