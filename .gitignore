@@ -174,3 +174,6 @@ cython_debug/
 # End of https://www.toptal.com/developers/gitignore/api/django
 
 llama3/llama-3.2/*
+
+# Local vendor dir for one-off translation scripts (deep-translator)
+.vendor_trans/

@@ -1,3 +1,4 @@
+setuptools>=68.2.2,<82
 whitenoise==6.6.0  # https://github.com/evansd/whitenoise
 redis==5.0.1  # https://github.com/redis/redis-py
 celery==5.3.6  # pyup: < 6.0  # https://github.com/celery/celery
@@ -6,22 +7,19 @@ hiredis==2.2.3  # https://github.com/redis/hiredis-py
 
 # Django
 # ------------------------------------------------------------------------------
-django==5.0.8
-django-environ==0.11.2
-djangorestframework==3.15.2
-djangorestframework-simplejwt==5.3.1  # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
-django-celery-beat==2.6.0  # https://github.com/celery/django-celery-beat
-django_celery_results==2.5.1
-django-compressor==4.4  # https://github.com/django-compressor/django-compressor
+django==6.0.5
+django-environ==0.13.0
+djangorestframework==3.17.1
+djangorestframework-simplejwt==5.5.1  # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/
+django-celery-beat==2.9.0  # https://github.com/celery/django-celery-beat
+django_celery_results==2.6.0
+django-compressor==4.6.0  # https://github.com/django-compressor/django-compressor
 
 # Wagtail
 # ------------------------------------------------------------------------------
-wagtail==6.3
-wagtail-modeladmin==2.1.0
-wagtail-django-recaptcha==2.1.1
-wagtailmenus==3.1.9
-wagtail-localize==1.8.2
-wagtail-autocomplete==0.11.0
+wagtail==7.4
+wagtail-modeladmin==2.3.0
+wagtail-autocomplete==0.12.0
 
 # lxml
 # ------------------------------------------------------------------------------
@@ -55,8 +53,3 @@ python-docx==1.1.2
 # huggingface-hub
 # ------------------------------------------------------------------------------
 huggingface_hub==0.26.1  # https://pypi.org/project/huggingface-hub/
-
-# Python Bindings for llama.cpp
-# ------------------------------------------------------------------------------
-llama-cpp-python==0.3.14  # https://llama-cpp-python.readthedocs.io/en/latest/
-
