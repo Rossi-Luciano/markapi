@@ -21,6 +21,10 @@ CACHES = {
 
 # SECURITY WARNING: define the correct hosts in production!
 ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = env.list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default=["https://tools-hml.scielo.org"],
+)
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 

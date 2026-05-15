@@ -7,6 +7,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin import messages
+from wagtail_modeladmin.options import ModelAdmin
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import (
     CreateView,
@@ -24,6 +25,8 @@ from markup_doc.models import (
     ProcessStatus,
     UploadDocx,
 )
+
+from markup_doc import views
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
 
