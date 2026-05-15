@@ -1,21 +1,12 @@
 # Third party imports
+from django.contrib import messages
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
-from django.contrib import messages
-
-from wagtail.snippets.views.snippets import (
-    CreateView,
-    EditView,
-    SnippetViewSet,
-)
-
 from wagtail.snippets.models import register_snippet
+from wagtail.snippets.views.snippets import CreateView, EditView, SnippetViewSet
 
-# Local application imports
-from model_ai.models import ( 
-    LlamaModel,
-    DownloadStatus,
-)
+from config.menu import get_menu_order
+from model_ai.models import DownloadStatus, LlamaModel
 from model_ai.tasks import download_model
 
 
@@ -43,12 +34,14 @@ class LlamaModelCreateView(CreateView):
             download_model.delay(form.instance.id)
         else:
             if not data.get("api_url") and not data.get("api_key_gemini"):
-                messages.error(self.request, _("API AI URL or API KEY GEMINI is required."))
+                messages.error(
+                    self.request, _("API AI URL or API KEY GEMINI is required.")
+                )
                 return self.form_invalid(form)
 
             self.object = form.save_all(self.request.user)
             messages.success(self.request, _("Model created, use API AI."))
-        
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -76,7 +69,9 @@ class LlamaModelEditView(EditView):
                 form.instance.save()
                 messages.success(self.request, _("Model updated and download started."))
             else:
-                messages.success(self.request, _("Model updated and already downloaded."))
+                messages.success(
+                    self.request, _("Model updated and already downloaded.")
+                )
         else:
             if not data.get("api_url"):
                 messages.error(self.request, _("API AI URL is required."))
@@ -92,17 +87,14 @@ class LlamaModelViewSet(SnippetViewSet):
     model = LlamaModel
     add_view_class = LlamaModelCreateView
     edit_view_class = LlamaModelEditView
-    menu_label = _("AI LLM Model")
-    menu_icon = "folder"
-    menu_order = 3
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
+    menu_name = "model_ai"
+    menu_label = _("Modelos de IA")
+    menu_icon = "cog"
+    menu_order = get_menu_order("model_ai")
+    exclude_from_explorer = False
     add_to_admin_menu = True
     list_per_page = 20
-    list_display = (
-        "display_name_model",
-        "get_download_status_display"
-    )
+    list_display = ("display_name_model", "get_download_status_display")
+
 
 register_snippet(LlamaModelViewSet)
