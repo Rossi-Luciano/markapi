@@ -54,7 +54,7 @@ Compose: `local.yml` (dev). Ambiente em `.envs/.local/`. Volume Postgres: `../sc
 
 ## Testes
 
-Settings: `config.settings.test` · Guia: **[docs/testing.md](docs/testing.md)**
+Settings: `config.settings.test` · 
 
 ```bash
 make build
@@ -112,7 +112,6 @@ No container, o entrypoint define `DATABASE_URL` e `CELERY_BROKER_URL` a partir 
 | `SENTRY_DSN` | Monitorização (produção) |
 | `COMPRESS_ENABLED` | Compressor de estáticos (produção) |
 
-Lista completa e notas: **[README.txt](README.txt)** (secção 4).
 
 ### Requisitos Python
 
