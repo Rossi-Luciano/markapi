@@ -1,0 +1,12 @@
+.custom-admin-logo {
+    display: block;
+    max-height: 2.5rem;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+}
+
+.custom-admin-logo--login {
+    max-height: 4rem;
+    margin: 0 auto;
+}

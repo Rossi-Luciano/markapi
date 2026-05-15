@@ -1,57 +1,56 @@
+from django.db import transaction
 from django.http import HttpResponseRedirect
-from django.utils.translation import gettext_lazy as _
 from django.template.response import TemplateResponse
-from wagtail_modeladmin.options import ModelAdmin
-
+from django.templatetags.static import static
+from django.urls import path
+from django.utils.html import format_html
+from django.utils.translation import gettext_lazy as _
+from wagtail import hooks
+from wagtail.admin import messages
+from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import (
     CreateView,
     EditView,
     SnippetViewSet,
-    SnippetViewSetGroup
+    SnippetViewSetGroup,
 )
 
-from markup_doc.models import ( 
-    ArticleDocx,
-    ArticleDocxMarkup,
-    UploadDocx,
-    MarkupXML,
+from config.menu import get_menu_order
+from markup_doc import views
+from markup_doc.models import (
     CollectionModel,
     JournalModel,
-    ProcessStatus
+    MarkupXML,
+    ProcessStatus,
+    UploadDocx,
 )
-
-from markup_doc.tasks import get_labels, task_sync_journals_from_api
-from wagtail.admin import messages
-
-from wagtail.snippets.models import register_snippet
-from django.db import transaction
-
 from markup_doc.sync_api import sync_collection_from_api
+from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
 
 
-
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_admin_urls():
     return [
-        path('download-xml/<int:id_registro>/', views.generate_xml, name='generate_xml'),
-        path('extract-citation/', views.extract_citation, name='extract_citation'),
-        path('get_journal/', views.get_journal, name='get_journal'),
-        path('download-zip/', views.generate_zip, name='generate_zip'),
-        path('preview-html/', views.preview_html_post, name='preview_html_post'),
-        path('pretty-xml/', views.preview_xml_tree, name='preview_xml_tree'),
+        path(
+            "download-xml/<int:id_registro>/", views.generate_xml, name="generate_xml"
+        ),
+        path("extract-citation/", views.extract_citation, name="extract_citation"),
+        path("get_journal/", views.get_journal, name="get_journal"),
+        path("download-zip/", views.generate_zip, name="generate_zip"),
+        path("preview-html/", views.preview_html_post, name="preview_html_post"),
+        path("pretty-xml/", views.preview_xml_tree, name="preview_xml_tree"),
     ]
 
 
-@hooks.register('insert_editor_js')
+@hooks.register("insert_editor_js")
 def xref_js():
     return format_html(
         '<script src="{}"></script>',
-        static('js/xref-button.js')
+        static("js/xref-button.js"),
     )
 
 
 class ArticleDocxCreateView(CreateView):
-    # def get_form_class(self):
     def dispatch(self, request, *args, **kwargs):
         if not CollectionModel.objects.exists():
             messages.warning(request, "Debes seleccionar primero una colección.")
@@ -67,7 +66,9 @@ class ArticleDocxCreateView(CreateView):
         self.object = form.save_all(self.request.user)
         self.object.estatus = ProcessStatus.PROCESSING
         self.object.save()
-        transaction.on_commit(lambda: get_labels.delay(self.object.title, self.request.user.id))
+        transaction.on_commit(
+            lambda: get_labels.delay(self.object.title, self.request.user.id)
+        )
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -75,22 +76,13 @@ class ArticleDocxEditView(EditView):
     def form_valid(self, form):
         form.instance.updated_by = self.request.user
         form.instance.save()
-        update_xml.delay(form.instance.id, form.instance.content.get_prep_value(), form.instance.content_body.get_prep_value(), form.instance.content_back.get_prep_value())
+        update_xml.delay(
+            form.instance.id,
+            form.instance.content.get_prep_value(),
+            form.instance.content_body.get_prep_value(),
+            form.instance.content_back.get_prep_value(),
+        )
         return HttpResponseRedirect(self.get_success_url())
-
-
-class ArticleDocxAdmin(ModelAdmin):
-    model = ArticleDocx
-    create_view_class = ArticleDocxCreateView
-    menu_label = _("Documents")
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
-    list_per_page = 20
-    list_display = ("title", "get_estatus_display")
 
 
 class ArticleDocxMarkupCreateView(CreateView):
@@ -99,41 +91,26 @@ class ArticleDocxMarkupCreateView(CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class ArticleDocxMarkupAdmin(ModelAdmin):
-    model = ArticleDocxMarkup
-    create_view_class = ArticleDocxMarkupCreateView
-    menu_label = _("Documents Markup")
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False  # or True to add your model to the Settings sub-menu
-    exclude_from_explorer = (
-        False  # or True to exclude pages of this type from Wagtail's explorer view
-    )
-    list_per_page = 20
-
-
 class UploadDocxViewSet(SnippetViewSet):
     model = UploadDocx
     add_view_class = ArticleDocxCreateView
     menu_label = _("Carregar DOCX")
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False
+    menu_icon = "upload"
+    add_to_admin_menu = False
     exclude_from_explorer = False
     list_per_page = 20
-    list_display = ("title", "get_estatus_display")  # Usar estatus, não status
+    list_display = ("title", "get_estatus_display")
     search_fields = ("title",)
-    list_filter = ("estatus",)  # Usar estatus, não status
+    list_filter = ("estatus",)
 
 
 class MarkupXMLViewSet(SnippetViewSet):
     model = MarkupXML
     add_view_class = ArticleDocxMarkupCreateView
     edit_view_class = ArticleDocxEditView
-    menu_label = _("XML marcado")  # Alterado de "MarkupXML"
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False
+    menu_label = _("XML SPS marcado")
+    menu_icon = "code"
+    add_to_admin_menu = False
     exclude_from_explorer = False
     list_display = ("title",)
     list_per_page = 20
@@ -155,10 +132,9 @@ class CollectionModelCreateView(CreateView):
 class CollectionModelViewSet(SnippetViewSet):
     model = CollectionModel
     add_view_class = CollectionModelCreateView
-    menu_label = _("Modelo de Coleções")  # Alterado de "CollectionModel"
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False
+    menu_label = _("Coleções SciELO")
+    menu_icon = "folder-inverse"
+    add_to_admin_menu = False
     exclude_from_explorer = False
     list_per_page = 20
     list_display = ("collection",)
@@ -173,10 +149,9 @@ class JournalModelCreateView(CreateView):
 
 class JournalModelViewSet(SnippetViewSet):
     model = JournalModel
-    menu_label = _("Modelo de Revistas")  # Alterado de "JournalModel"
-    menu_icon = "folder"
-    menu_order = 1
-    add_to_settings_menu = False
+    menu_label = _("Periódicos")
+    menu_icon = "doc-empty"
+    add_to_admin_menu = False
     exclude_from_explorer = False
     list_per_page = 20
     list_display = ("title",)
@@ -204,15 +179,15 @@ class JournalModelViewSet(SnippetViewSet):
 
 
 class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = "docx_files"  # Renomeado de 'docx_processor'
-    menu_label = _("DOCX Files")
-    menu_icon = "folder-open-inverse"
-    menu_order = 0  # Mudado de 1 para 0 para ficar na primeira posição
+    menu_name = "markup_doc"
+    menu_label = _("Marcação editorial")
+    menu_icon = "edit"
+    menu_order = get_menu_order("markup_doc")
     items = (
-        UploadDocxViewSet,
-        MarkupXMLViewSet,
         CollectionModelViewSet,
         JournalModelViewSet,
+        UploadDocxViewSet,
+        MarkupXMLViewSet,
     )
 
 

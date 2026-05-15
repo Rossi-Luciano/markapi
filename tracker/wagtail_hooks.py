@@ -1,21 +1,16 @@
 from django.utils.translation import gettext_lazy as _
-from wagtail_modeladmin.options import (
-    ModelAdmin,
-    ModelAdminGroup,
-    modeladmin_register,
-)
+from wagtail_modeladmin.options import ModelAdmin, ModelAdminGroup, modeladmin_register
 
 from config.menu import get_menu_order
 
-from .models import XMLDocumentEvent, GeneralEvent
+from .models import GeneralEvent, XMLDocumentEvent
 
 
 class XMLDocumentEventModelAdmin(ModelAdmin):
     model = XMLDocumentEvent
     inspect_view_enabled = True
-    menu_label = _("XML Document Events")
-    menu_icon = "warning"
-    menu_order = 100
+    menu_label = _("Eventos de documento XML")
+    menu_icon = "history"
     add_to_settings_menu = False
     exclude_from_explorer = False
     list_per_page = 10
@@ -27,7 +22,7 @@ class XMLDocumentEventModelAdmin(ModelAdmin):
         "message",
         "created",
     )
-    list_filter = ("error_type", )
+    list_filter = ("error_type",)
     search_fields = (
         "message",
         "data",
@@ -44,9 +39,8 @@ class XMLDocumentEventModelAdmin(ModelAdmin):
 class GeneralEventModelAdmin(ModelAdmin):
     model = GeneralEvent
     inspect_view_enabled = True
-    menu_label = _("General Events")
-    menu_icon = "warning"
-    menu_order = 200
+    menu_label = _("Eventos gerais")
+    menu_icon = "history"
     add_to_settings_menu = False
     exclude_from_explorer = False
     list_per_page = 10
@@ -58,7 +52,10 @@ class GeneralEventModelAdmin(ModelAdmin):
         "exception_msg",
         "created",
     )
-    list_filter = ("action", "exception_type", )
+    list_filter = (
+        "action",
+        "exception_type",
+    )
     search_fields = (
         "exception_msg",
         "detail",
@@ -77,8 +74,9 @@ class GeneralEventModelAdmin(ModelAdmin):
 
 
 class EventModelAdminGroup(ModelAdminGroup):
-    menu_icon = "warning"
-    menu_label = _("Unexpected Events")
+    menu_name = "tracker"
+    menu_icon = "history"
+    menu_label = _("Rastreio de eventos")
     menu_order = get_menu_order("tracker")
     items = (GeneralEventModelAdmin, XMLDocumentEventModelAdmin)
 

@@ -2,21 +2,18 @@
 from django.http import HttpResponseRedirect
 from django.utils.translation import gettext_lazy as _
 from wagtail.snippets.models import register_snippet
-from wagtail.snippets.views.snippets import (
-    CreateView,
-    SnippetViewSet,
-)
+from wagtail.snippets.views.snippets import CreateView, SnippetViewSet
 
 # Local application imports
+from config.menu import get_menu_order
 from reference.data_utils import get_reference
 from reference.models import Reference
 
 
 class ReferenceCreateView(CreateView):
     def form_valid(self, form):
-
         # Obtener el contenido de mixed_citation del formulario
-        mixed_citation_text = form.cleaned_data['mixed_citation'].strip()
+        mixed_citation_text = form.cleaned_data["mixed_citation"].strip()
         lineas = mixed_citation_text.split("\n")  # Dividir por saltos de línea
 
         # Crear un nuevo objeto Reference por cada línea válida
@@ -33,17 +30,16 @@ class ReferenceCreateView(CreateView):
 
         # Redirigir después de la creación de los objetos
         return HttpResponseRedirect(self.get_success_url())
-        
+
 
 class ReferenceModelViewSet(SnippetViewSet):
     model = Reference
     add_view_class = ReferenceCreateView
-    menu_label = _("Reference")
-    menu_icon = "folder"
-    menu_order = 3
-    exclude_from_explorer = (
-        False
-    )
+    menu_name = "reference"
+    menu_label = _("Referências bibliográficas")
+    menu_icon = "openquote"
+    menu_order = get_menu_order("reference")
+    exclude_from_explorer = False
     list_per_page = 20
     add_to_admin_menu = True
 
