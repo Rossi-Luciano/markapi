@@ -4,8 +4,6 @@
 
 Repositório: [scieloorg/markapi](https://github.com/scieloorg/markapi) · Licença: GPLv3
 
-Documentação completa em texto: **[README.txt](README.txt)**
-
 ---
 
 ## Objetivo do projeto
