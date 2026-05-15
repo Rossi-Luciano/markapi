@@ -1,3 +1,8 @@
-from django.test import TestCase
+from django.test import SimpleTestCase
 
-# Create your tests here.
+from users.models import CustomUser
+
+
+class SmokeTestCase(SimpleTestCase):
+    def test_custom_user_model_is_configured(self):
+        self.assertEqual(CustomUser._meta.label, "users.CustomUser")

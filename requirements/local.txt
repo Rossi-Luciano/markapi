@@ -8,4 +8,8 @@ watchgod==0.8.2  # https://github.com/samuelcolvin/watchgod
 django-extensions==3.2.3  # https://github.com/django-extensions/django-extensions
 django-debug-toolbar  # https://github.com/jazzband/django-debug-toolbar
 
-pytest >= 7.0.7
+pytest==8.3.5
+pytest-django==4.11.1
+pytest-cov==6.1.1
+coverage==7.8.0
+django-coverage-plugin==3.1.0
