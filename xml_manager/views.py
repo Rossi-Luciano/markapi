@@ -5,6 +5,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from .models import SPSPackageValidation, SPSPackageValidationStatus, XMLDocument
+from .tasks import task_process_xml_document, task_validate_sps_package
 
 
 
@@ -24,8 +25,7 @@ def revalidate_sps_package_pk(request, pk):
     validation.validated_at = None
     validation.error_message = ""
     validation.save()
-    # TODO: here add the code to validate the package
-    
+    task_validate_sps_package.delay(validation.pk)
     messages.success(
         request,
         _("Validation started for “%(title)s”.") % {"title": validation},

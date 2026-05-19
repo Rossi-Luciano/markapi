@@ -1,7 +1,9 @@
+import csv
 import io
 import os
+import tempfile
 import zipfile
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.messages.storage.fallback import FallbackStorage
@@ -15,6 +17,8 @@ from wagtail.documents.models import Document
 from xml_manager.exceptions import SPS_Package_Validation_Error
 from xml_manager.forms import SPSPackageValidationForm
 from xml_manager.models import SPSPackageValidation, SPSPackageValidationStatus
+from xml_manager.tasks import task_validate_sps_package
+from xml_manager.utils import FIELDNAMES, validate_zip, write_csv
 from xml_manager.views import revalidate_sps_package_pk
 
 User = get_user_model()
@@ -184,4 +188,187 @@ class SPSPackageValidationRevalidateViewTests(TestCase):
         request = _request_for_user(self.user)
         with self.assertRaises(Http404):
             revalidate_sps_package_pk(request, pk=99999)
+
+    def test_revalidate_dispatches_task(self):
+        with patch("xml_manager.views.task_validate_sps_package") as mock_task:
+            request = _request_for_user(self.user)
+            revalidate_sps_package_pk(request, pk=self.validation.pk)
+            mock_task.delay.assert_called_once_with(self.validation.pk)
+
+
+def _mock_validate_xml_content(items):
+    return iter([{"group": "test-group", "items": items}])
+
+
+def _mock_xml_with_pre(mock_xmltree=None):
+    mock_xml = MagicMock()
+    mock_xml.xmltree = mock_xmltree or MagicMock()
+    return mock_xml
+
+
+class ValidateZipTests(TestCase):
+    def _patch_packtools(self, items):
+        patcher_xmlwithpre = patch(
+            "xml_manager.utils.XMLWithPre.create",
+            return_value=iter([_mock_xml_with_pre()]),
+        )
+        patcher_validator = patch(
+            "xml_manager.utils.xml_validator.validate_xml_content",
+            return_value=_mock_validate_xml_content(items),
+        )
+        patcher_journal = patch(
+            "xml_manager.utils._extract_journal_data",
+            return_value={},
+        )
+        return patcher_xmlwithpre, patcher_validator, patcher_journal
+
+    def test_returns_list_of_dicts(self):
+        item = {
+            "title": "t", "parent": "article", "parent_id": None,
+            "parent_article_type": "research-article", "item": "article-id",
+            "sub_item": None, "validation_type": "format",
+            "response": "ERROR", "expected_value": "doi",
+            "got_value": None, "advice": "add doi",
+        }
+        p1, p2, p3 = self._patch_packtools([item])
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        self.assertIsInstance(result, list)
+        self.assertEqual(len(result), 1)
+
+    def test_result_has_expected_keys(self):
+        item = {
+            "title": "t", "parent": "article", "parent_id": None,
+            "parent_article_type": "research-article", "item": "article-id",
+            "sub_item": "pub-id-type", "validation_type": "format",
+            "response": "ERROR", "expected_value": "doi",
+            "got_value": None, "advice": "add doi",
+        }
+        p1, p2, p3 = self._patch_packtools([item])
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        for key in FIELDNAMES:
+            self.assertIn(key, result[0])
+
+    def test_attribute_concatenates_item_and_sub_item(self):
+        item = {
+            "title": None, "parent": None, "parent_id": None,
+            "parent_article_type": None, "item": "foo", "sub_item": "bar",
+            "validation_type": None, "response": "OK",
+            "expected_value": None, "got_value": None, "advice": None,
+        }
+        p1, p2, p3 = self._patch_packtools([item])
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        self.assertEqual(result[0]["attribute"], "foo/bar")
+
+    def test_attribute_omits_empty_sub_item(self):
+        item = {
+            "title": None, "parent": None, "parent_id": None,
+            "parent_article_type": None, "item": "foo", "sub_item": None,
+            "validation_type": None, "response": "OK",
+            "expected_value": None, "got_value": None, "advice": None,
+        }
+        p1, p2, p3 = self._patch_packtools([item])
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        self.assertEqual(result[0]["attribute"], "foo")
+
+    def test_handles_none_items_in_group(self):
+        p1, p2, p3 = self._patch_packtools([None, None])
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        self.assertEqual(result, [])
+
+    def test_handles_none_items_list(self):
+        p1, p2, p3 = self._patch_packtools(None)
+        with p1, p2, p3:
+            result = validate_zip("fake.zip")
+        self.assertEqual(result, [])
+
+
+class WriteCsvTests(TestCase):
+    def test_creates_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.csv")
+            write_csv([], path)
+            self.assertTrue(os.path.exists(path))
+
+    def test_has_correct_header(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.csv")
+            write_csv([], path)
+            with open(path, newline="", encoding="utf-8") as f:
+                reader = csv.DictReader(f)
+                self.assertEqual(reader.fieldnames, FIELDNAMES)
+
+    def test_returns_output_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.csv")
+            returned = write_csv([], path)
+            self.assertEqual(returned, path)
+
+
+class TaskValidateSpsPackageTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="staff", password="secret", is_staff=True
+        )
+        self.package, self.zip_size = make_package_document()
+        self.validation = SPSPackageValidation.objects.create(
+            package_document=self.package,
+            zip_size_bytes=self.zip_size,
+            validated_by=self.user,
+        )
+
+    def _run_task(self, rows=None):
+        with patch("xml_manager.tasks.utils.validate_zip", return_value=rows or []):
+            task_validate_sps_package.delay(self.validation.pk)
+
+    def test_status_transitions_to_done(self):
+        self._run_task()
+        self.validation.refresh_from_db()
+        self.assertEqual(self.validation.status, SPSPackageValidationStatus.DONE)
+
+    def test_validation_document_is_created(self):
+        self._run_task()
+        self.validation.refresh_from_db()
+        self.assertIsNotNone(self.validation.validation_document)
+
+    def test_validated_at_is_set(self):
+        self._run_task()
+        self.validation.refresh_from_db()
+        self.assertIsNotNone(self.validation.validated_at)
+
+    def test_error_message_cleared_on_done(self):
+        self.validation.error_message = "old error"
+        self.validation.save()
+        self._run_task()
+        self.validation.refresh_from_db()
+        self.assertEqual(self.validation.error_message, "")
+
+    def test_status_transitions_to_error_on_failure(self):
+        with patch("xml_manager.tasks.utils.validate_zip", side_effect=Exception("boom")):
+            task_validate_sps_package.delay(self.validation.pk)
+        self.validation.refresh_from_db()
+        self.assertEqual(self.validation.status, SPSPackageValidationStatus.ERROR)
+        self.assertEqual(self.validation.error_message, "boom")
+
+    def test_existing_validation_document_replaced(self):
+        old_doc = Document(title="old.csv")
+        old_doc.file.save(
+            "old.csv",
+            SimpleUploadedFile("old.csv", b"a,b\n"),
+            save=True,
+        )
+        old_doc_pk = old_doc.pk
+        self.validation.validation_document = old_doc
+        self.validation.save()
+
+        self._run_task()
+        self.validation.refresh_from_db()
+
+        self.assertFalse(Document.objects.filter(pk=old_doc_pk).exists())
+        self.assertIsNotNone(self.validation.validation_document)
+        self.assertNotEqual(self.validation.validation_document.pk, old_doc_pk)
 

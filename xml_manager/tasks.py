@@ -1,8 +1,10 @@
 import logging
 import os
+import tempfile
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from config import celery_app
@@ -15,9 +17,12 @@ from tracker.choices import (
     XML_DOCUMENT_UNKNOWN_ERROR,
 )
 from tracker.models import XMLDocumentEvent
+from xml_manager.forms import SPSPackageValidationForm
 from xml_manager.models import (
-    XMLDocument, 
-    XMLDocumentHTML, 
+    SPSPackageValidation,
+    SPSPackageValidationStatus,
+    XMLDocument,
+    XMLDocumentHTML,
     XMLDocumentPDF,
 )
 from xml_manager import exceptions
@@ -218,3 +223,45 @@ def task_generate_html_file(self, xml_id, user_id=None, username=None):
             save=True,
         )
         return False
+
+
+@celery_app.task(bind=True)
+def task_validate_sps_package(self, validation_pk):
+    try:
+        validation = SPSPackageValidation.objects.get(pk=validation_pk)
+    except SPSPackageValidation.DoesNotExist:
+        logging.error(f"SPSPackageValidation pk={validation_pk} does not exist.")
+        return False
+
+    validation.status = SPSPackageValidationStatus.RUNNING
+    validation.save()
+
+    try:
+        zip_path = validation.package_document.file.path
+        rows = utils.validate_zip(zip_path)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_name = os.path.splitext(validation.package_document.title)[0]
+            csv_path = os.path.join(tmpdir, f"{base_name}.validation.csv")
+            utils.write_csv(rows, csv_path)
+
+            if validation.validation_document:
+                validation.validation_document.delete()
+                validation.validation_document = None
+
+            validation.validation_document = SPSPackageValidationForm.save_wagtail_document_from_path(
+                csv_path,
+                title=f"{base_name}.validation.csv",
+            )
+
+        validation.status = SPSPackageValidationStatus.DONE
+        validation.validated_at = timezone.now()
+        validation.error_message = ""
+
+    except Exception as e:
+        logging.error(f"Error during SPS package validation pk={validation_pk}: {e}")
+        validation.status = SPSPackageValidationStatus.ERROR
+        validation.error_message = str(e)
+
+    validation.save()
+    return True

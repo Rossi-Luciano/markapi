@@ -1,6 +1,11 @@
+import csv
 import os
 
 from packtools import data_checker
+from packtools.sps.models.article_license import ArticleLicense
+from packtools.sps.pid_provider.models.journal_meta import JournalID, Publisher, Title
+from packtools.sps.pid_provider.xml_sps_lib import XMLWithPre
+from packtools.sps.validation import xml_validator
 from packtools.sps.formats.pdf.pipeline import docx
 from packtools.sps.formats.pdf.utils import file_utils
 from packtools.sps.formats.pdf.pipeline.xml import extract_article_main_language
@@ -24,6 +29,74 @@ def validate_xml_document(xml_file_path, output_root_dir, params):
         raise exceptions.XML_File_Validation_Error(f"Error during XML validation: {e}")
 
     return path_csv, path_exceptions
+
+
+FIELDNAMES = [
+    "group", "title", "parent", "parent_id", "parent_article_type",
+    "item", "sub_item", "attribute", "validation_type",
+    "response", "expected_value", "got_value", "advice",
+]
+
+
+def _extract_journal_data(xmltree):
+    try:
+        license_code = None
+        for lic in ArticleLicense(xmltree).licenses:
+            code = lic.get("code")
+            if code:
+                license_code = code
+                break
+        return {
+            "abbrev_journal_title": Title(xmltree).abbreviated_journal_title,
+            "publisher_name_list": Publisher(xmltree).publishers_names,
+            "nlm_journal_title": JournalID(xmltree).nlm_ta,
+            "license_code": license_code,
+        }
+    except Exception:
+        return {}
+
+
+def validate_zip(zip_path: str) -> list:
+    rows = []
+    for xml_with_pre in XMLWithPre.create(path=zip_path):
+        xmltree = xml_with_pre.xmltree
+        rules = {"journal_data": _extract_journal_data(xmltree)}
+        for group_result in xml_validator.validate_xml_content(xmltree, rules):
+            group = group_result.get("group", "")
+            try:
+                items = list(group_result.get("items") or [])
+            except Exception:
+                continue
+            for result in items:
+                if not result:
+                    continue
+                item = result.get("item") or ""
+                sub_item = result.get("sub_item") or ""
+                attribute = "/".join(filter(None, [item, sub_item]))
+                rows.append({
+                    "group": group,
+                    "title": result.get("title"),
+                    "parent": result.get("parent"),
+                    "parent_id": result.get("parent_id"),
+                    "parent_article_type": result.get("parent_article_type"),
+                    "item": item,
+                    "sub_item": sub_item,
+                    "attribute": attribute,
+                    "validation_type": result.get("validation_type"),
+                    "response": result.get("response"),
+                    "expected_value": result.get("expected_value"),
+                    "got_value": result.get("got_value"),
+                    "advice": result.get("advice"),
+                })
+    return rows
+
+
+def write_csv(rows: list, output_csv: str) -> str:
+    with open(output_csv, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+        writer.writeheader()
+        writer.writerows(rows)
+    return output_csv
 
 
 def generate_pdf_for_xml_document(xml_file_path, output_root_dir, params):

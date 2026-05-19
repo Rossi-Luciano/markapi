@@ -6,6 +6,7 @@ from django.urls import include, path, reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
+from wagtail.admin.panels import FieldPanel
 from wagtail.admin.ui.tables import Column
 from wagtail.admin.widgets.button import Button
 from wagtail.snippets.models import register_snippet
@@ -27,6 +28,7 @@ from .models import (
     XMLDocumentHTML,
     XMLDocumentPDF,
 )
+from .tasks import task_validate_sps_package
 
 
 
@@ -75,6 +77,9 @@ class SPSPackageValidationCreateView(CreateView):
     def get_form_class(self):
         return SPSPackageValidationForm
 
+    def get_bound_panel(self, form):
+        return None
+
     def form_valid(self, form):
         zip_upload = form.cleaned_data["zip_upload"]
         document = SPSPackageValidationForm.save_wagtail_document(zip_upload)
@@ -86,8 +91,7 @@ class SPSPackageValidationCreateView(CreateView):
         )
         validation.save()
         self.object = validation
-        # TODO: here add the code to validate the package
-        
+        task_validate_sps_package.delay(validation.pk)
         messages.success(
             self.request,
             _("SPS package uploaded. Validation started for “%(title)s”.")
@@ -99,6 +103,9 @@ class SPSPackageValidationCreateView(CreateView):
 class SPSPackageValidationEditView(EditView):
     def get_form_class(self):
         return SPSPackageValidationForm
+
+    def get_bound_panel(self, form):
+        return None
 
     def form_valid(self, form):
         validation = form.instance
@@ -121,8 +128,7 @@ class SPSPackageValidationEditView(EditView):
         validation.error_message = ""
         validation.save()
         self.object = validation
-        # TODO: here add the code to validate the package
-        
+        task_validate_sps_package.delay(validation.pk)
         messages.success(
             self.request,
             _("Validation started for “%(title)s”.") % {"title": validation},
@@ -245,9 +251,10 @@ def register_admin_urls():
 def sps_package_validation_listing_buttons(snippet, user, next_url=None):
     if not isinstance(snippet, SPSPackageValidation):
         return
-    yield Button(
+    btn = Button(
         _("Revalidar"),
         reverse("revalidate_sps_package_pk", args=[snippet.pk]),
-        icon_name="rotate",
         priority=25,
     )
+    btn.allow_in_dropdown = False
+    yield btn
