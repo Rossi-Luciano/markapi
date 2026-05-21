@@ -31,7 +31,6 @@ from .models import (
 from .tasks import task_validate_sps_package
 
 
-
 class FileNameColumn(Column):
     def get_value(self, instance):
         val = super().get_value(instance)
@@ -204,9 +203,10 @@ class SPSPackageValidationSnippetViewSet(SnippetViewSet):
     copy_view_enabled = False
     verbose_name = _("SPS package validation")
     verbose_name_plural = _("Validar pacote SPS")
-    icon = "doc-full-inverse"
+    icon = "sps-package-validation"
     menu_name = "sps_package_validation"
     menu_label = _("Validar pacote SPS")
+    menu_icon = "sps-package-validation"
     add_to_admin_menu = False
 
     list_display = (
@@ -240,6 +240,11 @@ class XMLDocumentSnippetViewSetGroup(SnippetViewSetGroup):
 register_snippet(XMLDocumentSnippetViewSetGroup)
 
 
+@hooks.register("register_icons")
+def register_xml_manager_icons(icons):
+    return icons + ["wagtailadmin/icons/sps-package-validation.svg"]
+
+
 @hooks.register("register_admin_urls")
 def register_admin_urls():
     return [
@@ -251,10 +256,9 @@ def register_admin_urls():
 def sps_package_validation_listing_buttons(snippet, user, next_url=None):
     if not isinstance(snippet, SPSPackageValidation):
         return
-    btn = Button(
+    yield Button(
         _("Revalidar"),
         reverse("revalidate_sps_package_pk", args=[snippet.pk]),
+        icon_name="sps-package-validation",
         priority=25,
     )
-    btn.allow_in_dropdown = False
-    yield btn

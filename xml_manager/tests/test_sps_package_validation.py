@@ -18,7 +18,7 @@ from xml_manager.exceptions import SPS_Package_Validation_Error
 from xml_manager.forms import SPSPackageValidationForm
 from xml_manager.models import SPSPackageValidation, SPSPackageValidationStatus
 from xml_manager.tasks import task_validate_sps_package
-from xml_manager.utils import FIELDNAMES, validate_zip, write_csv
+from xml_manager.utils import FIELDNAMES, validate_zip, write_csv, write_exceptions_json
 from xml_manager.views import revalidate_sps_package_pk
 
 User = get_user_model()
@@ -196,8 +196,17 @@ class SPSPackageValidationRevalidateViewTests(TestCase):
             mock_task.delay.assert_called_once_with(self.validation.pk)
 
 
-def _mock_validate_xml_content(items):
-    return iter([{"group": "test-group", "items": items}])
+def _mock_validation_results(items):
+    if items is None:
+        return iter([])
+    results = []
+    for item in items:
+        if not item:
+            continue
+        row = dict(item)
+        row.setdefault("group", "test-group")
+        results.append(row)
+    return iter(results)
 
 
 def _mock_xml_with_pre(mock_xmltree=None):
@@ -213,8 +222,8 @@ class ValidateZipTests(TestCase):
             return_value=iter([_mock_xml_with_pre()]),
         )
         patcher_validator = patch(
-            "xml_manager.utils.xml_validator.validate_xml_content",
-            return_value=_mock_validate_xml_content(items),
+            "xml_manager.utils.get_validation_results",
+            return_value=_mock_validation_results(items),
         )
         patcher_journal = patch(
             "xml_manager.utils._extract_journal_data",
@@ -224,67 +233,135 @@ class ValidateZipTests(TestCase):
 
     def test_returns_list_of_dicts(self):
         item = {
-            "title": "t", "parent": "article", "parent_id": None,
-            "parent_article_type": "research-article", "item": "article-id",
-            "sub_item": None, "validation_type": "format",
-            "response": "ERROR", "expected_value": "doi",
-            "got_value": None, "advice": "add doi",
+            "title": "t",
+            "parent": "article",
+            "parent_id": None,
+            "parent_article_type": "research-article",
+            "item": "article-id",
+            "sub_item": None,
+            "validation_type": "format",
+            "response": "ERROR",
+            "expected_value": "doi",
+            "got_value": None,
+            "advice": "add doi",
         }
         p1, p2, p3 = self._patch_packtools([item])
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
-        self.assertIsInstance(result, list)
-        self.assertEqual(len(result), 1)
+            rows, exceptions = validate_zip("fake.zip")
+        self.assertIsInstance(rows, list)
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(exceptions, [])
 
     def test_result_has_expected_keys(self):
         item = {
-            "title": "t", "parent": "article", "parent_id": None,
-            "parent_article_type": "research-article", "item": "article-id",
-            "sub_item": "pub-id-type", "validation_type": "format",
-            "response": "ERROR", "expected_value": "doi",
-            "got_value": None, "advice": "add doi",
+            "title": "t",
+            "parent": "article",
+            "parent_id": None,
+            "parent_article_type": "research-article",
+            "item": "article-id",
+            "sub_item": "pub-id-type",
+            "validation_type": "format",
+            "response": "ERROR",
+            "expected_value": "doi",
+            "got_value": None,
+            "advice": "add doi",
         }
         p1, p2, p3 = self._patch_packtools([item])
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
+            rows, _exceptions = validate_zip("fake.zip")
         for key in FIELDNAMES:
-            self.assertIn(key, result[0])
+            self.assertIn(key, rows[0])
 
     def test_attribute_concatenates_item_and_sub_item(self):
         item = {
-            "title": None, "parent": None, "parent_id": None,
-            "parent_article_type": None, "item": "foo", "sub_item": "bar",
-            "validation_type": None, "response": "OK",
-            "expected_value": None, "got_value": None, "advice": None,
+            "title": None,
+            "parent": None,
+            "parent_id": None,
+            "parent_article_type": None,
+            "item": "foo",
+            "sub_item": "bar",
+            "validation_type": None,
+            "response": "ERROR",
+            "expected_value": None,
+            "got_value": None,
+            "advice": None,
         }
         p1, p2, p3 = self._patch_packtools([item])
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
-        self.assertEqual(result[0]["attribute"], "foo/bar")
+            rows, _exceptions = validate_zip("fake.zip")
+        self.assertEqual(rows[0]["attribute"], "foo/bar")
 
     def test_attribute_omits_empty_sub_item(self):
         item = {
-            "title": None, "parent": None, "parent_id": None,
-            "parent_article_type": None, "item": "foo", "sub_item": None,
-            "validation_type": None, "response": "OK",
-            "expected_value": None, "got_value": None, "advice": None,
+            "title": None,
+            "parent": None,
+            "parent_id": None,
+            "parent_article_type": None,
+            "item": "foo",
+            "sub_item": None,
+            "validation_type": None,
+            "response": "ERROR",
+            "expected_value": None,
+            "got_value": None,
+            "advice": None,
         }
         p1, p2, p3 = self._patch_packtools([item])
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
-        self.assertEqual(result[0]["attribute"], "foo")
+            rows, _exceptions = validate_zip("fake.zip")
+        self.assertEqual(rows[0]["attribute"], "foo")
+
+    def test_collects_exception_items(self):
+        exception_item = {
+            "response": "exception",
+            "group": "article-id",
+            "error": "boom",
+            "type": "ValueError",
+        }
+        p1, p2, p3 = self._patch_packtools([exception_item])
+        with p1, p2, p3:
+            rows, exceptions = validate_zip("fake.zip")
+        self.assertEqual(rows, [])
+        self.assertEqual(len(exceptions), 1)
+        self.assertEqual(exceptions[0]["response"], "exception")
 
     def test_handles_none_items_in_group(self):
         p1, p2, p3 = self._patch_packtools([None, None])
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
-        self.assertEqual(result, [])
+            rows, exceptions = validate_zip("fake.zip")
+        self.assertEqual(rows, [])
+        self.assertEqual(exceptions, [])
 
     def test_handles_none_items_list(self):
         p1, p2, p3 = self._patch_packtools(None)
         with p1, p2, p3:
-            result = validate_zip("fake.zip")
-        self.assertEqual(result, [])
+            rows, exceptions = validate_zip("fake.zip")
+        self.assertEqual(rows, [])
+        self.assertEqual(exceptions, [])
+
+
+class WriteExceptionsJsonTests(TestCase):
+    def test_creates_file(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.exceptions.json")
+            write_exceptions_json([], path)
+            self.assertTrue(os.path.exists(path))
+
+    def test_writes_jsonl_lines(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.exceptions.json")
+            write_exceptions_json(
+                [{"response": "exception", "group": "g", "error": "e"}],
+                path,
+            )
+            with open(path, encoding="utf-8") as fp:
+                content = fp.read()
+            self.assertIn('"response": "exception"', content)
+
+    def test_returns_output_path(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            path = os.path.join(tmpdir, "out.exceptions.json")
+            returned = write_exceptions_json([], path)
+            self.assertEqual(returned, path)
 
 
 class WriteCsvTests(TestCase):
@@ -321,8 +398,11 @@ class TaskValidateSpsPackageTests(TestCase):
             validated_by=self.user,
         )
 
-    def _run_task(self, rows=None):
-        with patch("xml_manager.tasks.utils.validate_zip", return_value=rows or []):
+    def _run_task(self, rows=None, exceptions=None):
+        with patch(
+            "xml_manager.tasks.utils.validate_zip",
+            return_value=(rows or [], exceptions or []),
+        ):
             task_validate_sps_package.delay(self.validation.pk)
 
     def test_status_transitions_to_done(self):
@@ -334,6 +414,31 @@ class TaskValidateSpsPackageTests(TestCase):
         self._run_task()
         self.validation.refresh_from_db()
         self.assertIsNotNone(self.validation.validation_document)
+
+    def test_exceptions_document_is_created(self):
+        self._run_task(
+            exceptions=[{"response": "exception", "group": "g", "error": "e"}]
+        )
+        self.validation.refresh_from_db()
+        self.assertIsNotNone(self.validation.exceptions_document)
+
+    def test_existing_exceptions_document_replaced(self):
+        old_doc = Document(title="old.exceptions.json")
+        old_doc.file.save(
+            "old.exceptions.json",
+            SimpleUploadedFile("old.exceptions.json", b"{}"),
+            save=True,
+        )
+        old_doc_pk = old_doc.pk
+        self.validation.exceptions_document = old_doc
+        self.validation.save()
+
+        self._run_task()
+        self.validation.refresh_from_db()
+
+        self.assertFalse(Document.objects.filter(pk=old_doc_pk).exists())
+        self.assertIsNotNone(self.validation.exceptions_document)
+        self.assertNotEqual(self.validation.exceptions_document.pk, old_doc_pk)
 
     def test_validated_at_is_set(self):
         self._run_task()
@@ -348,7 +453,9 @@ class TaskValidateSpsPackageTests(TestCase):
         self.assertEqual(self.validation.error_message, "")
 
     def test_status_transitions_to_error_on_failure(self):
-        with patch("xml_manager.tasks.utils.validate_zip", side_effect=Exception("boom")):
+        with patch(
+            "xml_manager.tasks.utils.validate_zip", side_effect=Exception("boom")
+        ):
             task_validate_sps_package.delay(self.validation.pk)
         self.validation.refresh_from_db()
         self.assertEqual(self.validation.status, SPSPackageValidationStatus.ERROR)
@@ -371,4 +478,3 @@ class TaskValidateSpsPackageTests(TestCase):
         self.assertFalse(Document.objects.filter(pk=old_doc_pk).exists())
         self.assertIsNotNone(self.validation.validation_document)
         self.assertNotEqual(self.validation.validation_document.pk, old_doc_pk)
-
