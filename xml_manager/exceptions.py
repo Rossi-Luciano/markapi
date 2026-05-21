@@ -12,3 +12,6 @@ class XML_File_PDF_Generation_Error(Exception):
 
 class XML_File_HTML_Generation_Error(Exception):
     pass
+
+class SPS_Package_Validation_Error(Exception):
+    pass
