@@ -2,6 +2,7 @@ import os
 from django.db import models, IntegrityError
 from django.db.models import Case, When, Value, IntegerField
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel
 from wagtail.fields import RichTextField
@@ -536,3 +537,57 @@ class FileWithLang(models.Model):
 
     class Meta:
         abstract = True
+
+
+class CoreSyncState(models.Model):
+    """
+    Guarda o checkpoint da última coleta da API Core por recurso.
+
+    A próxima coleta deve sempre retomar a partir de ``last_updated_at``.
+    """
+
+    resource = models.CharField(_("Resource"), max_length=50, unique=True)
+    last_updated_at = models.DateTimeField(
+        _("Last updated at"), null=True, blank=True
+    )
+    last_success_at = models.DateTimeField(
+        _("Last success at"), null=True, blank=True
+    )
+
+    class Meta:
+        verbose_name = _("Core sync state")
+        verbose_name_plural = _("Core sync states")
+
+    def __unicode__(self):
+        return self.resource
+
+    def __str__(self):
+        return self.resource
+
+    @classmethod
+    def get_for_resource(cls, resource):
+        obj, _ = cls.objects.get_or_create(resource=resource)
+        return obj
+
+    def get_from_date_updated(self, default):
+        """
+        Retorna a data inicial para o filtro ``from_date_created`` da API.
+
+        Usa sempre a última data coletada; se ainda não houver checkpoint,
+        retorna ``default``.
+        """
+        if self.last_updated_at:
+            return self.last_updated_at.date().isoformat()
+        return default
+
+
+    def update_checkpoint(self, max_updated_at=None):
+        """
+        Atualiza o checkpoint após uma execução bem-sucedida de sync.
+        """
+        update_fields = ["last_success_at"]
+        if max_updated_at:
+            self.last_updated_at = max_updated_at
+            update_fields.append("last_updated_at")
+        self.last_success_at = timezone.now()
+        self.save(update_fields=update_fields)
