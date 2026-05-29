@@ -1,5 +1,6 @@
 from django import forms
 from django.db import models
+from django.db.models import Q
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
@@ -262,6 +263,74 @@ class JournalModel(models.Model):
         return self.title or ""
 
 
+class Issue(CommonControlField, ClusterableModel):
+    """
+    Class that represent an Issue
+    """
+
+    journal = models.ForeignKey(
+        JournalModel,
+        verbose_name=_("Journal"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    number = models.CharField(_("Issue number"), max_length=20, null=True, blank=True)
+    volume = models.CharField(_("Issue volume"), max_length=20, null=True, blank=True)
+    season = models.CharField(
+        _("Issue season"),
+        max_length=20,
+        null=True,
+        blank=True,
+        help_text=_("Ex: Jan-Abr."),
+    )
+    year = models.CharField(_("Issue year"), max_length=4, null=True, blank=True)
+    month = models.CharField(_("Issue month"), max_length=20, null=True, blank=True)
+    supplement = models.CharField(_("Supplement"), max_length=20, null=True, blank=True)
+
+    panels = [
+        AutocompletePanel("journal"),
+        FieldPanel("number"),
+        FieldPanel("volume"),
+        FieldPanel("season"),
+        FieldPanel("year"),
+        FieldPanel("month"),
+        FieldPanel("supplement"),
+    ]
+
+    autocomplete_search_field = "number"
+
+    @classmethod
+    def autocomplete_custom_queryset_filter(cls, search_query):
+        return cls.objects.filter(
+            Q(number__icontains=search_query)
+            | Q(volume__icontains=search_query)
+            | Q(year__icontains=search_query)
+            | Q(supplement__icontains=search_query)
+            | Q(journal__title__icontains=search_query)
+        )
+
+    def autocomplete_label(self):
+        return str(self)
+
+    def __str__(self):
+        return f"{self.generate_issue_folder} - {self.journal}"
+
+    @property
+    def generate_issue_folder(self):
+        """
+        Gera o identificador do issue no formato vXnYsZ.
+
+        Returns:
+            str: String no formato vXnYsZ (ex: v10n2s1, v5n3, n2s1)
+        """
+        values = (self.volume, self.number, self.supplement)
+        labels = ("v", "n", "s")
+        return "".join(
+            [f"{label}{value}" for label, value in zip(labels, values) if value]
+        )
+
+
 def get_default_collection_acron():
     try:
         obj = CollectionModel.objects.select_related("collection").first()
@@ -302,15 +371,13 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
     license = models.URLField(
         max_length=500, blank=True, null=True, verbose_name=_("License (URL)")
     )
-    vol = models.IntegerField(verbose_name=_("Volume"), null=True, blank=True)
-    supplvol = models.IntegerField(
-        verbose_name=_("Suppl Volume"), null=True, blank=True
+    issue = models.ForeignKey(
+        Issue,
+        verbose_name=_("Issue"),
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
     )
-    issue = models.IntegerField(verbose_name=_("Issue"), null=True, blank=True)
-    supplno = models.IntegerField(verbose_name=_("Suppl Num"), null=True, blank=True)
-    issid_part = models.TextField(_("Isid Part"), null=True, blank=True)
-    dateiso = models.TextField(_("Dateiso"), null=True, blank=True)
-    month = models.TextField(_("Month/Season"), null=True, blank=True)
     fpage = models.TextField(_("First Page"), null=True, blank=True)
     seq = models.TextField(_("@Seq"), null=True, blank=True)
     lpage = models.TextField(_("Last Page"), null=True, blank=True)
@@ -371,6 +438,7 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         FieldPanel("file"),
         FieldPanel("collection"),
         AutocompletePanel("journal"),
+        AutocompletePanel("issue"),
     ]
 
     def __unicode__(self):
@@ -457,13 +525,7 @@ class MarkupXML(ArticleDocxMarkup):
         FieldPanel("nimtitle"),
         FieldPanel("pubname"),
         FieldPanel("license"),
-        FieldPanel("vol"),
-        FieldPanel("supplvol"),
-        FieldPanel("issue"),
-        FieldPanel("supplno"),
-        FieldPanel("issid_part"),
-        FieldPanel("dateiso"),
-        FieldPanel("month"),
+        AutocompletePanel("issue"),
         FieldPanel("fpage"),
         FieldPanel("seq"),
         FieldPanel("lpage"),
