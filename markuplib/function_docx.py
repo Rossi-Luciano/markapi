@@ -301,15 +301,21 @@ class functionsDocx:
         review_fb = True
         #Palabras a buscar como indicador del primer bloque
         start_text = ['introducción', 'introduction', 'introdução']
+        is_numPr = False
+        text_paragraph = []
 
         current_list = []
         current_num_id = None
         numId = None
         namespaces_p = '{http://schemas.openxmlformats.org/wordprocessingml/2006/main}'
 
-        for element in doc.element.body:        
+        for element in doc.element.body:
             if isinstance(element, CT_P):
                 obj = {}
+                paragraph = element
+                text_paragraph = []
+                _ns_w = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                is_numPr = paragraph.find('.//w:numPr', namespaces=_ns_w) is not None
 
                 namespaces = {
                     'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
@@ -640,7 +646,11 @@ class functionsDocx:
                         obj2['value'] = ' '.join(text_paragraph)
                         obj['text'].append(obj2)
                         text_paragraph = []
-            
+
+                # Add paragraph to content for all docs, not only those with tables
+                if not is_numPr and 'text' in obj:
+                    content.append(obj)
+
             elif isinstance(element, CT_Tbl):
                 namespaces = {
                     'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main',
@@ -658,7 +668,5 @@ class functionsDocx:
                     obj2['value'] = ' '.join(text_paragraph)
                     obj['text'].append(obj2)
                     text_paragraph = []
-                if not is_numPr:
-                    content.append(obj)
         sections.sort(key=section_priority)
         return sections, content
