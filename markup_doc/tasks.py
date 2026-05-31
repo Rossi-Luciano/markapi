@@ -25,7 +25,7 @@ from markup_doc.labeling_utils import MODEL_NAME_GEMINI, MODEL_NAME_LLAMA
 from markuplib.function_docx import functionsDocx
 from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
-from markup_doc.sync_api import sync_journals_from_api
+from markup_doc.sync_api import sync_issues_from_api, sync_journals_from_api
 from markup_doc.xml import get_xml
 
 
@@ -47,8 +47,13 @@ def clean_labels(text):
 
 
 @celery_app.task()
-def task_sync_journals_from_api():
+def task_sync_journals_from_api(user_id=None, collection_acron=None):
     sync_journals_from_api()
+
+
+@celery_app.task()
+def task_sync_issues_from_api(user_id=None):
+    sync_issues_from_api()
 
 
 @celery_app.task()
