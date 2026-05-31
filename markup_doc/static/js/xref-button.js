@@ -523,8 +523,76 @@ function get_zip() {
   
     // También en DOMContentLoaded por si basta
     document.addEventListener("DOMContentLoaded", tryAttach);
-  
+
     // Llama una vez por si ya está listo
     tryAttach();
   })();
+
+
+// Botão Reprocessar — aparece nas views de edição de ProcessedDocx e MarkupXML
+(function () {
+    var path = window.location.pathname;
+    var isProcessedDocx = path.indexOf('processeddocx/edit/') !== -1;
+    var isMarkupXml = path.indexOf('markupxml/edit/') !== -1;
+
+    if (!isProcessedDocx && !isMarkupXml) return;
+
+    var match = path.match(/\/edit\/(\d+)\//);
+    if (!match) return;
+    var pk = match[1];
+
+    function makeBtn() {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.id = 'reprocess-btn';
+        btn.textContent = 'Reprocessar';
+        btn.style.cssText = [
+            'padding:4px 12px',
+            'cursor:pointer',
+            'background:#e9a000',
+            'color:white',
+            'font-weight:bold',
+            'border:none',
+            'border-radius:4px',
+            'margin-left:8px',
+            'font-size:14px',
+        ].join(';');
+        btn.addEventListener('mouseover', function () { btn.style.background = '#c98000'; });
+        btn.addEventListener('mouseout', function () { btn.style.background = '#e9a000'; });
+        btn.addEventListener('click', function () {
+            var msg = isMarkupXml
+                ? 'Isso irá descartar as edições manuais e reprocessar o DOCX original. Continuar?'
+                : 'Reprocessar este documento?';
+            if (confirm(msg)) {
+                window.location.href = '/admin/reprocess/' + pk + '/';
+            }
+        });
+        return btn;
+    }
+
+    function tryInsert() {
+        if (document.getElementById('reprocess-btn')) return true;
+        // Tenta área de ações do cabeçalho Wagtail (v5/v6)
+        var actionArea = document.querySelector('.w-slim-header__action-buttons')
+            || document.querySelector('[data-controller="w-slim-header"] .w-slim-header__title-wrapper');
+        if (actionArea) {
+            actionArea.appendChild(makeBtn());
+            return true;
+        }
+        // Fallback: insere após o primeiro botão submit (salvar)
+        var saveBtn = document.querySelector('button[type="submit"]');
+        if (saveBtn && saveBtn.parentNode) {
+            saveBtn.parentNode.insertBefore(makeBtn(), saveBtn.nextSibling);
+            return true;
+        }
+        return false;
+    }
+
+    if (!tryInsert()) {
+        var obs = new MutationObserver(function () {
+            if (tryInsert()) obs.disconnect();
+        });
+        obs.observe(document.documentElement, { childList: true, subtree: true });
+    }
+})();
 
