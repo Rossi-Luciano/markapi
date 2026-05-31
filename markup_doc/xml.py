@@ -279,29 +279,28 @@ def get_xml(article_docx, data_front, data, data_back):
             node_tmp2 = etree.SubElement(node_tmp, 'year')
             node_tmp2.text = article_docx.artdate.strftime("%Y")
         
-        if article_docx.dateiso:
+        issue = article_docx.issue
+
+        if issue and (issue.year or issue.month):
             node_tmp = etree.SubElement(node, 'pub-date')
             node_tmp.set('date-type', 'collection')
             node_tmp.set('publication-format', 'electronic')
 
-            if article_docx.dateiso.split('-')[2] and article_docx.dateiso.split('-')[2] != '00':
-                node_tmp2 = etree.SubElement(node_tmp, 'day')
-                node_tmp2.text = article_docx.dateiso.split('-')[2]
-
-            if article_docx.dateiso.split('-')[1] and article_docx.dateiso.split('-')[1] != '00':
+            if issue.month:
                 node_tmp2 = etree.SubElement(node_tmp, 'month')
-                node_tmp2.text = article_docx.dateiso.split('-')[1]
+                node_tmp2.text = issue.month
 
-            node_tmp2 = etree.SubElement(node_tmp, 'year')
-            node_tmp2.text = article_docx.dateiso.split('-')[0]
+            if issue.year:
+                node_tmp2 = etree.SubElement(node_tmp, 'year')
+                node_tmp2.text = issue.year
 
-        if article_docx.vol:
+        if issue and issue.volume:
             node_tmp = etree.SubElement(node, 'volume')
-            node_tmp.text = str(article_docx.vol)
+            node_tmp.text = str(issue.volume)
 
-        if article_docx.issue:
+        if issue and issue.number:
             node_tmp = etree.SubElement(node, 'issue')
-            node_tmp.text = str(article_docx.issue)
+            node_tmp.text = str(issue.number)
         
         if article_docx.elocatid:
             node_tmp = etree.SubElement(node, 'elocation-id')
