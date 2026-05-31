@@ -773,6 +773,17 @@ def create_labeled_object2(i, item, state, sections):
         obj["type"] = "paragraph"
         obj["value"] = {"label": state["label"], "paragraph": item.get("text")}
 
+    if state.get("body") and re.search(
+        r"^(refer[eê]nci|references?)\s*$", item.get("text").strip().lower()
+    ):
+        state["label"] = "<sec>"
+        state["body"] = False
+        state["back"] = True
+        result = {"label": "<sec>", "body": False, "back": True}
+        obj["type"] = "paragraph"
+        obj["value"] = {"label": state["label"], "paragraph": item.get("text")}
+
+
     if not result:
         result = {"label": "<p>", "body": state["body"], "back": state["back"]}
         state["label"] = result.get("label")
@@ -874,12 +885,12 @@ def get_data_first_block(text, metadata, user_id):
         "Content-Type": "application/json",
     }
 
+    resp_json = {}
     response = requests.post(url, json=payload, headers=headers)
 
     if response.status_code == 200:
         response_json = response.json()
         message_str = response_json["message"]
-
         resp_json = json.loads(message_str)
 
     return resp_json
@@ -1279,6 +1290,7 @@ def append_fragment(node_dest, val):
 
     clean = escape_angle_brackets_outside_tags(clean)
     clean = remove_unpaired_tags(clean)
+    clean = re.sub(r'<(?![/a-zA-Z_])', '&lt;', clean)
 
     if clean == "":
         parent = node_dest.getparent()
@@ -1351,23 +1363,17 @@ def proccess_special_content(text, data_body):
     res = []
     dict_type = {"f": "fig", "t": "table", "e": "disp-formula"}
 
-    try:
-        for match in re.finditer(
-            pattern, text, re.IGNORECASE | re.UNICODE | re.VERBOSE
-        ):
-            label = match.group(0)
-
-            id = search_special_id(data_body, label)
-
-            res.append(
-                {
-                    "label": label,
-                    "id": id,
-                    "reftype": dict_type.get(id[0].lower(), "other"),
-                }
-            )
-    except Exception as exc:
-        print(f"ERROR proccess_special_content: {exc}")
-        pass
+    for match in re.finditer(pattern, text, re.IGNORECASE | re.UNICODE | re.VERBOSE):
+        label = match.group(0)
+        id = search_special_id(data_body, label)
+        if id is None:
+            continue
+        res.append(
+            {
+                "label": label,
+                "id": id,
+                "reftype": dict_type.get(id[0].lower(), "other"),
+            }
+        )
 
     return res
