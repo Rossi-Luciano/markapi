@@ -1,5 +1,6 @@
-from django.shortcuts import render
-from django.http import HttpResponse, HttpResponseBadRequest, Http404
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.http import FileResponse, HttpResponse, HttpResponseBadRequest, Http404
 from .models import ArticleDocxMarkup
 #from .xml import extraer_citas_apa
 from django.http import JsonResponse
@@ -51,6 +52,38 @@ def generate_xml(request, id_registro):
         return HttpResponse("El registro solicitado no existe", status=404)
     except Exception as e:
         return HttpResponse(f"Error al generar el XML: {str(e)}", status=500)
+
+
+def download_marked_docx(request, pk):
+    try:
+        registro = ArticleDocxMarkup.objects.get(pk=pk)
+        if not registro.marked_file:
+            raise Http404("Arquivo marcado não disponível")
+        filename = os.path.basename(registro.marked_file.name)
+        return FileResponse(
+            registro.marked_file.open("rb"),
+            as_attachment=True,
+            filename=filename,
+        )
+    except ArticleDocxMarkup.DoesNotExist:
+        raise Http404("Registro não encontrado")
+
+
+def reprocess(request, pk):
+    from markup_doc.tasks import get_labels
+    from markup_doc.models import ProcessStatus
+    try:
+        registro = ArticleDocxMarkup.objects.get(pk=pk)
+        if not registro.file or not registro.file.name:
+            messages.error(request, "Arquivo DOCX original não encontrado.")
+            return redirect(request.META.get("HTTP_REFERER", "/admin/"))
+        registro.estatus = ProcessStatus.PROCESSING
+        registro.save(update_fields=["estatus"])
+        get_labels.delay(registro.title, request.user.id)
+        messages.success(request, f'Reprocessamento iniciado para "{registro.title}".')
+    except ArticleDocxMarkup.DoesNotExist:
+        messages.error(request, "Registro não encontrado.")
+    return redirect(request.META.get("HTTP_REFERER", "/admin/"))
 
 
 def extract_citation(request):

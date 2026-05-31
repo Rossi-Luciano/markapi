@@ -2,11 +2,14 @@
 from config import celery_app
 
 # Standard library imports
+import io
 import json
+import os
 import re
 
 # Third-party imports
 import langid
+from django.core.files.base import ContentFile
 
 from markup_doc.models import UploadDocx, MarkupXML
 from markup_doc.labeling_utils import (
@@ -27,6 +30,7 @@ from model_ai.llama import LlamaService, LlamaInputSettings
 from reference.config_gemini import create_prompt_reference
 from markup_doc.sync_api import sync_journals_from_api
 from markup_doc.xml import get_xml
+from markup_doc.xref import is_marked, mark_references, validate_marks, read_marks, build_text_xref_replacer
 
 
 def clean_labels(text):
@@ -55,6 +59,70 @@ def task_sync_journals_from_api():
 def get_labels(title, user_id):
     article_docx = UploadDocx.objects.get(title=title)
     doc = functionsDocx.openDocx(article_docx.file.path)
+
+    if not is_marked(doc):
+        doc = mark_references(doc)
+
+    xref_validation = validate_marks(doc)
+    if not xref_validation["valid"]:
+        for err in xref_validation["errors"]:
+            print(f"[xref] ERROR: {err}")
+
+    article_docx.xref_status = {
+        "valid": xref_validation["valid"],
+        "total_references": len(xref_validation["bookmarks"]),
+        "total_citations": len(xref_validation["hyperlinks"]),
+        "orphaned_bookmarks": xref_validation["orphaned_bookmarks"],
+        "orphaned_hyperlinks": xref_validation["orphaned_hyperlinks"],
+        "warnings": xref_validation["warnings"],
+        "errors": xref_validation["errors"],
+    }
+
+    ref_marks = read_marks(doc)
+    xref_map = {
+        cit: ref["rid"]
+        for ref in ref_marks
+        for cit in ref["citations"]
+        if cit
+    }
+    # Expand Vancouver range/multi citations to include all rids.
+    # e.g. "[26-27]" linked to B26 should produce rid="B26 B27";
+    # "[3,4,5]" linked to B3 should produce rid="B3 B4 B5".
+    _bracket_re = re.compile(r'^\[(\d+(?:[,\-]\d+)*)\]$')
+    for cit, rid in list(xref_map.items()):
+        m = _bracket_re.match(cit.strip())
+        if not m:
+            continue
+        numbers = []
+        for part in m.group(1).split(','):
+            part = part.strip()
+            if '-' in part:
+                a, b = part.split('-', 1)
+                try:
+                    numbers.extend(range(int(a), int(b) + 1))
+                except ValueError:
+                    pass
+            else:
+                try:
+                    numbers.append(int(part))
+                except ValueError:
+                    pass
+        if len(numbers) > 1:
+            xref_map[cit] = ' '.join(f'B{n}' for n in numbers)
+    italic_variants = {
+        cit.replace("et al.", "<italic>et al.</italic>"): rid
+        for cit, rid in xref_map.items()
+        if "et al." in cit
+    }
+    xref_map.update(italic_variants)
+    text_xref_fn = build_text_xref_replacer(doc)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    marked_name = os.path.splitext(os.path.basename(article_docx.file.name))[0] + "_marked.docx"
+    article_docx.marked_file.save(marked_name, ContentFile(buf.read()), save=False)
+
     sections, content = functionsDocx().extractContent(doc, article_docx.file.path)
     article_docx_markup = article_docx
     text_title = ''
@@ -297,6 +365,31 @@ def get_labels(title, user_id):
     
         stream_data_back.extend(process_references(num_refs, output))
 
+    # data_front is never iterated inside get_xml — rescue any <p> items that the
+    # state machine left in stream_data (body paragraphs misclassified as front
+    # because their section headings use named Word styles with font_size=0).
+    rescued = [item for item in stream_data if item.get('value', {}).get('label') == '<p>']
+    if rescued:
+        stream_data_body = rescued + stream_data_body
+        stream_data = [item for item in stream_data if item not in rescued]
+
+    # Apply xref_map (DOCX hyperlinks) and narrative Author (year) xrefs to body.
+    for item in stream_data_body:
+        if item.get('value', {}).get('label') == '<p>':
+            para = item['value'].get('paragraph', '') or ''
+            if not para:
+                continue
+            # 1. Dict-based from DOCX hyperlinks
+            if xref_map:
+                for cit_text, rid in sorted(xref_map.items(), key=lambda x: -len(x[0])):
+                    para = para.replace(
+                        cit_text,
+                        f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>',
+                    )
+            # 2. Narrative "Author (year)" citations
+            para = text_xref_fn(para)
+            item['value']['paragraph'] = para
+
     article_docx_markup.content = stream_data
     article_docx_markup.content_body = stream_data_body
     article_docx_markup.content_back = stream_data_back
@@ -305,7 +398,7 @@ def get_labels(title, user_id):
     article_docx.estatus = ProcessStatus.PROCESSED
     article_docx.save()
 
-    xml, stream_data_body = get_xml(article_docx, stream_data, stream_data_body, stream_data_back)
+    xml, stream_data_body = get_xml(article_docx, stream_data, stream_data_body, stream_data_back, xref_map=xref_map)
     article_docx_markup.content_body = stream_data_body
 
     # Guardar el XML
