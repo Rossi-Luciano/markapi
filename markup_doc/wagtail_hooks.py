@@ -7,7 +7,6 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 from wagtail.admin import messages
-from wagtail_modeladmin.options import ModelAdmin
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import (
     CreateView,
@@ -20,6 +19,7 @@ from config.menu import get_menu_order
 from markup_doc import views
 from markup_doc.models import (
     CollectionModel,
+    Issue,
     JournalModel,
     MarkupXML,
     ProcessStatus,
@@ -48,8 +48,9 @@ def register_admin_urls():
 @hooks.register("insert_editor_js")
 def xref_js():
     return format_html(
-        '<script src="{}"></script>',
+        '<script src="{}"></script><script src="{}"></script>',
         static("js/xref-button.js"),
+        static("js/issue-autocomplete-filter.js"),
     )
 
 
@@ -181,6 +182,18 @@ class JournalModelViewSet(SnippetViewSet):
         return response
 
 
+class IssueViewSet(SnippetViewSet):
+    model = Issue
+    menu_label = _("Fascículos")
+    menu_icon = "date"
+    add_to_admin_menu = False
+    exclude_from_explorer = False
+    list_per_page = 20
+    list_display = ("journal", "volume", "number", "year")
+    search_fields = ("journal__title", "volume", "number", "year")
+    list_filter = ("journal", "year")
+
+
 class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_name = "markup_doc"
     menu_label = _("Marcação editorial")
@@ -189,6 +202,7 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     items = (
         CollectionModelViewSet,
         JournalModelViewSet,
+        IssueViewSet,
         UploadDocxViewSet,
         MarkupXMLViewSet,
     )
