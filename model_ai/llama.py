@@ -3,13 +3,10 @@ import logging
 import os
 import time
 
-from config.settings.base import (
-    LLAMA_ENABLED,
-    LLAMA_MODEL_DIR,
-)
-
 # Third-party imports
 import google.generativeai as genai
+
+from config.settings.base import LLAMA_ENABLED, LLAMA_MODEL_DIR
 
 # Local application imports
 from model_ai import messages
@@ -20,97 +17,116 @@ from model_ai.exceptions import (
 )
 from model_ai.models import LlamaModel
 
+GEMINI_MODEL = "models/gemini-3.1-flash-lite-preview"
+logger = logging.getLogger(__name__)
+
 
 class LlamaService:
-  # Singleton pattern to cache the LLaMA model instance
-  _cached_llm = None
+    # Singleton pattern to cache the LLaMA model instance
+    _cached_llm = None
 
-  def __init__(self, messages=None, response_format=None, max_tokens=4000, temperature=0.1, top_p=0.1, mode='chat', nthreads=2):
-    self.messages = messages
-    self.response_format = response_format
-    self.max_tokens = max_tokens
-    self.temperature = temperature
-    self.top_p = top_p
-    self.mode = mode
-
-    model_ai = LlamaModel.objects.first()
-
-    # Initialize local LLaMA only when Gemini is not configured
-    if not model_ai or not model_ai.api_key_gemini:
-
-      if not LLAMA_ENABLED:
-        raise LlamaDisabledError("LLaMA is disabled in settings.")
-      
-      if LlamaService._cached_llm is None:
-        try:
-          from llama_cpp import Llama
-        except ImportError as e:
-          raise LlamaNotInstalledError("The 'llama-cpp-python' package is not installed. Please use the llama-activated Docker image (Dockerfile.llama).") from e
+    def __init__(
+        self,
+        messages=None,
+        response_format=None,
+        max_tokens=4000,
+        temperature=0.1,
+        top_p=0.1,
+        mode="chat",
+        nthreads=2,
+    ):
+        self.messages = messages
+        self.response_format = response_format
+        self.max_tokens = max_tokens
+        self.temperature = temperature
+        self.top_p = top_p
+        self.mode = mode
 
         model_ai = LlamaModel.objects.first()
-        if not model_ai:
-          raise LlamaModelNotFoundError("No LLaMA model configured in the database. Please add a LLaMA model entry.")
-      
-        model_path = os.path.join(LLAMA_MODEL_DIR, model_ai.name_file)
-        if not os.path.isfile(model_path):
-          raise LlamaModelNotFoundError(f"LLaMA model file not found at {model_path}. Please ensure the model is downloaded and the path is correct.")
 
-        try:
-          LlamaService._cached_llm = Llama(model_path=model_path, n_ctx=max_tokens, n_threads=nthreads)
-        except Exception as e:
-          raise RuntimeError(f"Failed to initialize LLaMA model: {e}") from e
-        
-      self.llm = LlamaService._cached_llm
+        # Initialize local LLaMA only when Gemini is not configured
+        if not model_ai or not model_ai.api_key_gemini:
+            if not LLAMA_ENABLED:
+                raise LlamaDisabledError("LLaMA is disabled in settings.")
 
-  def run(self, user_input):
-    if self.mode == 'chat':
-      return self._run_as_chat(user_input)
-    elif self.mode == 'prompt':
-      return self._run_as_content_generation(user_input)
+            if LlamaService._cached_llm is None:
+                try:
+                    from llama_cpp import Llama
+                except ImportError as e:
+                    raise LlamaNotInstalledError(
+                        "The 'llama-cpp-python' package is not installed. Please use the llama-activated Docker image (Dockerfile.llama)."
+                    ) from e
 
-  def _run_as_chat(self, user_input):
-    """ Run LLaMA in chat mode."""
-    input = self.messages.copy()
-    input.append({
-      'role': 'user',
-      'content': user_input
-    })
-    return self.llm.create_chat_completion(
-      messages=input, 
-      response_format=self.response_format, 
-      max_tokens=self.max_tokens, 
-      temperature=self.temperature, 
-      top_p=self.top_p
-    )
-  
-  def _run_as_content_generation(self, user_input):
-    """ Run LLaMA in completion mode."""
-    model_ai = LlamaModel.objects.first()
+                model_ai = LlamaModel.objects.first()
+                if not model_ai:
+                    raise LlamaModelNotFoundError(
+                        "No LLaMA model configured in the database. Please add a LLaMA model entry."
+                    )
 
-    # Try to use Gemini if configured
-    if model_ai and model_ai.api_key_gemini:
+                model_path = os.path.join(LLAMA_MODEL_DIR, model_ai.name_file)
+                if not os.path.isfile(model_path):
+                    raise LlamaModelNotFoundError(
+                        f"LLaMA model file not found at {model_path}. Please ensure the model is downloaded and the path is correct."
+                    )
 
-      # Setup Gemini API key
-      genai.configure(api_key=model_ai.api_key_gemini)
+                try:
+                    LlamaService._cached_llm = Llama(
+                        model_path=model_path, n_ctx=max_tokens, n_threads=nthreads
+                    )
+                except Exception as e:
+                    raise RuntimeError(f"Failed to initialize LLaMA model: {e}") from e
 
-      # Fetch the Gemini model
-      # FIXME: Hardcoded model name
-      model = genai.GenerativeModel('models/gemini-3.1-flash-lite-preview')
+            self.llm = LlamaService._cached_llm
 
-      # Generate content using Gemini
-      response_gemini = model.generate_content(user_input).text
-      time.sleep(15)
-      return response_gemini
+    def run(self, user_input):
+        if self.mode == "chat":
+            return self._run_as_chat(user_input)
+        elif self.mode == "prompt":
+            return self._run_as_content_generation(user_input)
 
-    # Gemini not configured, fallback to LLaMA
-    else:
-      return self.llm(
-        user_input, 
-        max_tokens=self.max_tokens, 
-        temperature=self.temperature, 
-        stop=["\n\n"]
-      )
-  
+    def _run_as_chat(self, user_input):
+        """Run LLaMA in chat mode."""
+        input = self.messages.copy()
+        input.append({"role": "user", "content": user_input})
+        return self.llm.create_chat_completion(
+            messages=input,
+            response_format=self.response_format,
+            max_tokens=self.max_tokens,
+            temperature=self.temperature,
+            top_p=self.top_p,
+        )
+
+    def _run_as_content_generation(self, user_input):
+        """Run LLaMA in completion mode."""
+        model_ai = LlamaModel.objects.first()
+
+        # Try to use Gemini if configured
+        if model_ai and model_ai.api_key_gemini:
+            genai.configure(api_key=model_ai.api_key_gemini)
+            model = genai.GenerativeModel(GEMINI_MODEL)
+            logger.info(
+                "Chamando Gemini (%s), prompt com %d caracteres",
+                GEMINI_MODEL,
+                len(user_input),
+            )
+            response_gemini = model.generate_content(user_input).text
+            logger.info(
+                "Resposta Gemini recebida (%d caracteres)",
+                len(response_gemini or ""),
+            )
+            time.sleep(15)
+            return response_gemini
+
+        else:
+            logger.info("Gemini não configurado — usando Llama local")
+            return self.llm(
+                user_input,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                stop=["\n\n"],
+            )
+
+
 class LlamaInputSettings:
     @staticmethod
     def get_first_metadata(text):
@@ -136,4 +152,3 @@ class LlamaInputSettings:
     @staticmethod
     def get_reference():
         return messages.REFERENCE_MESSAGES, messages.REFERENCE_RESPONSE_FORMAT
-  
