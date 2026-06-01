@@ -1,3 +1,4 @@
+from config.menu import get_menu_order
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -5,6 +6,7 @@ from django.templatetags.static import static
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from reference.wagtail_hooks import ReferenceModelViewSet
 from wagtail import hooks
 from wagtail.admin import messages
 from wagtail.snippets.models import register_snippet
@@ -14,9 +16,11 @@ from wagtail.snippets.views.snippets import (
     SnippetViewSet,
     SnippetViewSetGroup,
 )
-from wagtail_modeladmin.options import ModelAdmin
+from xml_manager.wagtail_hooks import (
+    XMLDocumentHTMLSnippetViewSet,
+    XMLDocumentPDFSnippetViewSet,
+)
 
-from config.menu import get_menu_order
 from markup_doc import views
 from markup_doc.models import (
     CollectionModel,
@@ -28,11 +32,6 @@ from markup_doc.models import (
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
-from reference.wagtail_hooks import ReferenceModelViewSet
-from xml_manager.wagtail_hooks import (
-    XMLDocumentHTMLSnippetViewSet,
-    XMLDocumentPDFSnippetViewSet,
-)
 
 
 @hooks.register("register_admin_urls")
@@ -227,11 +226,9 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_icon = "edit"
     menu_order = get_menu_order("markup_doc")
     items = (
-        CollectionModelViewSet,
-        JournalModelViewSet,
-        IssueViewSet,
         UploadDocxViewSet,
         XMLSPSSnippetViewSetGroup,
+        IssueViewSet,
     )
 
 
