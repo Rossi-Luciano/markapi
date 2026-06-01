@@ -477,8 +477,6 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
             append_fragment(node_tmp2, vals[0].value.get("paragraph"))
 
         if vals2 and vals2[0]:
-
-        if vals2:
             # Encuentra su índice original en article_docx.content
             last_index = data_t.index(vals2[0])
 
