@@ -1,7 +1,7 @@
 WAGTAIL_MENU_APPS_ORDER = [
+    "sps_package_validation",
     "markup_doc",
-    "xml_manager",
-    "reference",
+    "scielo",
     "tracker",
     "model_ai",
     "django_celery_beat",
