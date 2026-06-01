@@ -642,7 +642,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                 d["value"]["paragraph"],
                 re.DOTALL,
             )
-            content_list = content_list.group(1)
+            content_list = content_list.group(1) if content_list else ""
             node_list_text = content_list.replace(
                 "[list-item]", "<list-item><p>"
             ).replace("[/list-item]", "</p></list-item>")
