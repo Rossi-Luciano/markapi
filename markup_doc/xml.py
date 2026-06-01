@@ -916,7 +916,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -1060,11 +1060,11 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                 )
                 append_fragment(etree.SubElement(node_ref, "page"), values["pages"])
 
-            if values["reftype"] == "thesis":
+            if values.get("reftype") == "thesis":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
