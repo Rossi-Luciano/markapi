@@ -69,9 +69,9 @@ class ArticleDocxCreateView(CreateView):
         self.object = form.save_all(self.request.user)
         self.object.estatus = ProcessStatus.PROCESSING
         self.object.save()
-        transaction.on_commit(
-            lambda: get_labels.delay(self.object.title, self.request.user.id)
-        )
+        article_pk = self.object.pk
+        user_id = self.request.user.id
+        transaction.on_commit(lambda: get_labels.delay(article_pk, user_id))
         return HttpResponseRedirect(self.get_success_url())
 
 
