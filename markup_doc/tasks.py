@@ -6,10 +6,13 @@ import re
 
 # Third-party imports
 import langid
+from config import celery_app
 from django.core.files.base import ContentFile
 from django.utils.text import slugify
+from markuplib.function_docx import functionsDocx
+from model_ai.llama import LlamaInputSettings, LlamaService
+from reference.config_gemini import create_prompt_reference
 
-from config import celery_app
 from markup_doc.labeling_utils import (
     MODEL_NAME_GEMINI,
     MODEL_NAME_LLAMA,
@@ -23,17 +26,9 @@ from markup_doc.labeling_utils import (
     process_references,
     split_in_three,
 )
-
-from markup_doc.labeling_utils import MODEL_NAME_GEMINI, MODEL_NAME_LLAMA
-from markuplib.function_docx import functionsDocx
-from model_ai.llama import LlamaService, LlamaInputSettings
-from reference.config_gemini import create_prompt_reference
-from markup_doc.sync_api import sync_issues_from_api, sync_journals_from_api
 from markup_doc.models import MarkupXML, ProcessStatus, UploadDocx
+from markup_doc.sync_api import sync_issues_from_api, sync_journals_from_api
 from markup_doc.xml import get_xml
-from markuplib.function_docx import functionsDocx
-from model_ai.llama import LlamaInputSettings, LlamaService
-from reference.config_gemini import create_prompt_reference
 
 logger = logging.getLogger(__name__)
 
@@ -86,10 +81,6 @@ def task_sync_issues_from_api(user_id=None):
 
 
 @celery_app.task()
-def get_labels(title, user_id):
-    article_docx = UploadDocx.objects.get(title=title)
-
-
 def get_labels(article_id, user_id):
     llm_model = get_llm_model_name()
     article_docx = UploadDocx.objects.get(pk=article_id)
@@ -103,8 +94,6 @@ def get_labels(article_id, user_id):
     doc = functionsDocx.openDocx(article_docx.file.path)
     sections, content = functionsDocx().extractContent(doc, article_docx.file.path)
     article_docx_markup = article_docx
-    text_title = ""
-    text_paragraph = ""
     stream_data = []
     stream_data_body = []
     stream_data_back = []
