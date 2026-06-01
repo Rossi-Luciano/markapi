@@ -654,7 +654,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                 node_list.append(child)
 
         if d["value"]["label"] == "<table>" or d["value"]["label"] == "<table-caption>":
-            attrib = {"id": d["value"]["tabid"]}
+            attrib = {"id": d["value"].get("tabid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -694,7 +694,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
             append_fragment(node_fnp, d["value"]["paragraph"])
 
         if d["value"]["label"] == "<fig>":
-            attrib = {"id": d["value"]["figid"]}
+            attrib = {"id": d["value"].get("figid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -703,11 +703,9 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                 node_p = etree.SubElement(node, "p")
                 node_fig = etree.SubElement(node_p, "fig", attrib=attrib)
 
-            etree.SubElement(node_fig, "label").text = d["value"]["figlabel"]
+            etree.SubElement(node_fig, "label").text = d["value"].get("figlabel")
             node_caption = etree.SubElement(node_fig, "caption")
-            etree.SubElement(node_caption, "title").text = (
-                d["value"]["title"] if "title" in d["value"] else None
-            )
+            etree.SubElement(node_caption, "title").text = d["value"].get("title")
 
             Image = get_image_model()
             image_id = d["value"]["image"]
@@ -728,7 +726,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
             append_fragment(node_attrib, d["value"]["paragraph"])
 
         if d["value"]["label"] == "<disp-formula>":
-            attrib = {"id": d["value"]["eid"]}
+            attrib = {"id": d["value"].get("eid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -745,7 +743,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
                     append_fragment(node_f, c["value"])
 
         if d["value"]["label"] == "<inline-formula>":
-            attrib = {"id": d["value"]["eid"]}
+            attrib = {"id": d["value"].get("eid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
