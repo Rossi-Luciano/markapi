@@ -32,15 +32,12 @@ from markup_doc.models import (
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
-<<<<<<< HEAD
+
 from xml_manager.wagtail_hooks import (
     SPSPackageValidationSnippetViewSet,
     XMLDocumentHTMLSnippetViewSet,
     XMLDocumentPDFSnippetViewSet,
 )
-=======
->>>>>>> 92e3c5e1efc5b93532d4cc264f5c408e416a3ff4
-
 
 @hooks.register("register_admin_urls")
 def register_admin_urls():
