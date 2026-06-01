@@ -92,7 +92,8 @@ class LlamaModelViewSet(SnippetViewSet):
     menu_icon = "cog"
     menu_order = get_menu_order("model_ai")
     exclude_from_explorer = False
-    add_to_admin_menu = True
+    add_to_admin_menu = False
+    add_to_settings_menu = True
     list_per_page = 20
     list_display = ("display_name_model", "get_download_status_display")
 

@@ -78,6 +78,8 @@ class EventModelAdminGroup(ModelAdminGroup):
     menu_icon = "history"
     menu_label = _("Rastreio de eventos")
     menu_order = get_menu_order("tracker")
+    add_to_admin_menu = False
+    add_to_settings_menu = True
     items = (GeneralEventModelAdmin, XMLDocumentEventModelAdmin)
 
 
