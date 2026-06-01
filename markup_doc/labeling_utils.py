@@ -1028,22 +1028,30 @@ def search_special_id(data_body, label):
             clean_label = re.sub(r"^[\s\.,;:–—-]+", "", label).capitalize()
 
             if d["type"] == "image":
-                if clean_label == data["figlabel"]:
-                    return data.get("figid")
+                figlabel = data.get("figlabel") or ""
+                figid = data.get("figid") or ""
+                if clean_label == figlabel:
+                    return figid or None
                 if (
-                    data["figid"][0] == clean_label.lower()[0]
-                    and data["figid"][1] in clean_label.lower()
+                    figid
+                    and len(figid) > 1
+                    and figid[0] == clean_label.lower()[:1]
+                    and figid[1] in clean_label.lower()
                 ):
-                    return data.get("figid")
+                    return figid
 
             if d["type"] == "table":
-                if clean_label == data["tablabel"]:
-                    return data.get("tabid")
+                tablabel = data.get("tablabel") or ""
+                tabid = data.get("tabid") or ""
+                if clean_label == tablabel:
+                    return tabid or None
                 if (
-                    data["tabid"][0] == clean_label.lower()[0]
-                    and data["tabid"][1] in clean_label.lower()
+                    tabid
+                    and len(tabid) > 1
+                    and tabid[0] == clean_label.lower()[:1]
+                    and tabid[1] in clean_label.lower()
                 ):
-                    return data.get("tabid")
+                    return tabid
 
     for d in data_body:
         if d["type"] in ["compound_paragraph"]:
