@@ -443,19 +443,33 @@ def get_labels(article_id, user_id):
         stream_data = [item for item in stream_data if item not in rescued]
 
     # Apply xref_map (DOCX hyperlinks) and narrative Author (year) xrefs to body.
+    # Use segment-based replacement to avoid substituting inside already-created
+    # <xref> tags (e.g. short Vancouver superscript keys like "2" would otherwise
+    # corrupt rid="B2" attribute values on the second iteration of the loop).
+    _xref_split_re = re.compile(r'(<xref[^>]*>.*?</xref>)', re.DOTALL)
+
+    def _apply_xref_map_safe(text, xmap):
+        parts = _xref_split_re.split(text)
+        result = []
+        for i, part in enumerate(parts):
+            if i % 2 != 0:
+                result.append(part)
+                continue
+            for cit_text, rid in sorted(xmap.items(), key=lambda x: -len(x[0])):
+                part = part.replace(
+                    cit_text,
+                    f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>',
+                )
+            result.append(part)
+        return ''.join(result)
+
     for item in stream_data_body:
         if item.get('value', {}).get('label') == '<p>':
             para = item['value'].get('paragraph', '') or ''
             if not para:
                 continue
-            # 1. Dict-based from DOCX hyperlinks
             if xref_map:
-                for cit_text, rid in sorted(xref_map.items(), key=lambda x: -len(x[0])):
-                    para = para.replace(
-                        cit_text,
-                        f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>',
-                    )
-            # 2. Narrative "Author (year)" citations
+                para = _apply_xref_map_safe(para, xref_map)
             para = text_xref_fn(para)
             item['value']['paragraph'] = para
 
