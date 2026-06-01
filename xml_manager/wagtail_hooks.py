@@ -12,8 +12,6 @@ from wagtail.admin.widgets.button import Button
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import CreateView, EditView, SnippetViewSet
 
-from config.menu import get_menu_order
-
 from . import urls
 from .forms import SPSPackageValidationForm
 from .models import (
@@ -156,7 +154,7 @@ class XMLDocumentPDFSnippetViewSet(SnippetViewSet):
     verbose_name_plural = _("XML Document PDFs")
     icon = "doc-full"
     menu_name = "xml_manager"
-    menu_label = _("PDFs derivados")
+    menu_label = _("PDFs")
     menu_icon = "doc-full"
     add_to_admin_menu = False
 
@@ -177,7 +175,7 @@ class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
     verbose_name_plural = _("XML Document HTMLs")
     icon = "doc-full"
     menu_name = "xml_manager"
-    menu_label = _("HTMLs derivados")
+    menu_label = _("HTMLs")
     menu_icon = "doc-full-inverse"
     add_to_admin_menu = False
 
@@ -202,8 +200,7 @@ class SPSPackageValidationSnippetViewSet(SnippetViewSet):
     menu_name = "sps_package_validation"
     menu_label = _("Validar SPS")
     menu_icon = "sps-package-validation"
-    add_to_admin_menu = True
-    menu_order = get_menu_order("sps_package_validation")
+    add_to_admin_menu = False
 
     list_display = (
         "__str__",
@@ -218,9 +215,6 @@ class SPSPackageValidationSnippetViewSet(SnippetViewSet):
 
     list_filter = ("status",)
     search_fields = ("package_document__title",)
-
-
-register_snippet(SPSPackageValidationSnippetViewSet)
 
 
 @hooks.register("register_icons")

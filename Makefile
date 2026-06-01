@@ -31,6 +31,10 @@ latest_commit:  ## Show last commit ref
 build_date: ## Show build date
 	@echo "Build date: " $(SCMS_BUILD_DATE)
 
+configure_git_hooks: ## Configure git hooks
+	cp -fa .git-hook-commit-msg .git/hooks/commit-msg
+	ln -sf ../../.git-hook-commit-msg .git/hooks/commit-msg	
+
 ############################################
 ## atalhos docker compose desenvolvimento ##
 ############################################

@@ -32,6 +32,14 @@ from markup_doc.models import (
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
+<<<<<<< HEAD
+from xml_manager.wagtail_hooks import (
+    SPSPackageValidationSnippetViewSet,
+    XMLDocumentHTMLSnippetViewSet,
+    XMLDocumentPDFSnippetViewSet,
+)
+=======
+>>>>>>> 92e3c5e1efc5b93532d4cc264f5c408e416a3ff4
 
 
 @hooks.register("register_admin_urls")
@@ -101,7 +109,7 @@ class ArticleDocxMarkupCreateView(CreateView):
 class UploadDocxViewSet(SnippetViewSet):
     model = UploadDocx
     add_view_class = ArticleDocxCreateView
-    menu_label = _("Carregar DOCX")
+    menu_label = _("DOCX")
     menu_icon = "upload"
     add_to_admin_menu = False
     exclude_from_explorer = False
@@ -115,7 +123,7 @@ class MarkupXMLViewSet(SnippetViewSet):
     model = MarkupXML
     add_view_class = ArticleDocxMarkupCreateView
     edit_view_class = ArticleDocxEditView
-    menu_label = _("XML SPS marcado")
+    menu_label = _("XML SPS")
     menu_icon = "code"
     add_to_admin_menu = False
     exclude_from_explorer = False
@@ -139,7 +147,7 @@ class CollectionModelCreateView(CreateView):
 class CollectionModelViewSet(SnippetViewSet):
     model = CollectionModel
     add_view_class = CollectionModelCreateView
-    menu_label = _("Coleções SciELO")
+    menu_label = _("Coleção")
     menu_icon = "folder-inverse"
     add_to_admin_menu = False
     exclude_from_explorer = False
@@ -203,15 +211,15 @@ class XMLSPSSnippetViewSetGroup(SnippetViewSetGroup):
     menu_icon = "code"
     items = (
         MarkupXMLViewSet,
+        SPSPackageValidationSnippetViewSet,
         XMLDocumentPDFSnippetViewSet,
         XMLDocumentHTMLSnippetViewSet,
-        ReferenceModelViewSet,
     )
 
 
 class ScieloSnippetViewSetGroup(SnippetViewSetGroup):
     menu_name = "scielo"
-    menu_label = _("SciELO")
+    menu_label = _("Journal Manager")
     menu_icon = "folder-open-inverse"
     menu_order = get_menu_order("scielo")
     items = (
