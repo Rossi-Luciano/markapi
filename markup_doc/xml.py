@@ -627,7 +627,7 @@ def get_xml(article_docx, data_front, data, data_back, xref_map=None):
 
         if d["value"]["label"] == "<list>":
             re_search = re.search(r'list list-type="(.*?)"\]', d["value"]["paragraph"])
-            list_type = re_search.group(1)
+            list_type = re_search.group(1) if re_search else "bullet"
             attrib = {"list-type": list_type}
 
             if subsec:
