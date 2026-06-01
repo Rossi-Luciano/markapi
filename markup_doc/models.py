@@ -1,11 +1,14 @@
+import json
+import os
+
 from django import forms
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
-from django.utils.html import format_html
+from django.utils.html import format_html, mark_safe
 from django.utils.translation import gettext_lazy as _
 from modelcluster.models import ClusterableModel
-from wagtail.admin.panels import FieldPanel, ObjectList, TabbedInterface
+from wagtail.admin.panels import FieldPanel, ObjectList, Panel, TabbedInterface
 from wagtail.blocks import ChoiceBlock, StreamBlock, StructBlock, TextBlock
 from wagtail.fields import StreamField
 from wagtail.images.blocks import ImageChooserBlock
@@ -26,14 +29,80 @@ class ProcessStatus(models.IntegerChoices):
 class ReadOnlyFileWidget(forms.Widget):
     def render(self, name, value, attrs=None, renderer=None):
         if value:
-            # Muestra el archivo como un enlace de descarga
-            # return format_html('<a href="{}" target="_blank" download>{}</a>', value.url, value.name.split('/')[-1])
             instance = value.instance
             url = reverse("generate_xml", args=[instance.pk])
             return format_html(
                 '<a href="{}" target="_blank" download>Download XML</a>', url
             )
         return ""
+
+
+class DownloadMarkedFileWidget(forms.Widget):
+    def render(self, name, value, attrs=None, renderer=None):
+        if value:
+            instance = value.instance
+            url = reverse("download_marked_docx", args=[instance.pk])
+            filename = os.path.basename(value.name)
+            return format_html(
+                '<a href="{}" target="_blank" download>{}</a>', url, filename
+            )
+        return mark_safe('<span style="color: gray;">Não disponível ainda</span>')
+
+
+class XrefStatusWidget(forms.Widget):
+    def render(self, name, value, attrs=None, renderer=None):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except (json.JSONDecodeError, ValueError):
+                value = None
+        if not value:
+            return mark_safe('<span style="color: gray;">Não processado</span>')
+        valid = value.get("valid", False)
+        total_refs = value.get("total_references", 0)
+        total_cits = value.get("total_citations", 0)
+        orphaned_bk = len(value.get("orphaned_bookmarks", []))
+        orphaned_hl = value.get("orphaned_hyperlinks", [])
+        color = "green" if valid else "red"
+        status = "Válido" if valid else "Inválido"
+        html = format_html(
+            '<p><strong style="color:{};">{}</strong> &nbsp; {} referências | {} citações linkadas</p>',
+            color, status, total_refs, total_cits,
+        )
+        if orphaned_hl:
+            html += format_html(
+                '<p style="color:red;">Citações sem referência: {}</p>',
+                ', '.join(orphaned_hl),
+            )
+        if orphaned_bk:
+            html += format_html(
+                '<p style="color:orange;">{} referência(s) sem citação no texto</p>',
+                orphaned_bk,
+            )
+        return html
+
+
+class ReprocessButtonPanel(Panel):
+    def __init__(self, confirm_message="Reprocessar este documento?", **kwargs):
+        super().__init__(**kwargs)
+        self.confirm_message = confirm_message
+
+    def clone_kwargs(self):
+        return {**super().clone_kwargs(), "confirm_message": self.confirm_message}
+
+    class BoundPanel(Panel.BoundPanel):
+        def render_html(self, parent_context=None):
+            if not self.instance or not self.instance.pk:
+                return ""
+            url = reverse("reprocess", args=[self.instance.pk])
+            msg = self.panel.confirm_message.replace("'", "\\'")
+            return mark_safe(
+                f'<div style="margin:12px 0;">'
+                f'<a href="{url}" onclick="return confirm(\'{msg}\')" '
+                f'style="padding:8px 16px;background:#e9a000;color:white;'
+                f'font-weight:bold;border-radius:4px;text-decoration:none;">'
+                f'Reprocessar</a></div>'
+            )
 
 
 class ArticleDocx(CommonControlField):
@@ -347,6 +416,17 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         verbose_name=_("Document"),
         upload_to="uploads_docx/",
     )
+    marked_file = models.FileField(
+        null=True,
+        blank=True,
+        verbose_name=_("Marked Document"),
+        upload_to="uploads_docx_marked/",
+    )
+    xref_status = models.JSONField(
+        _("XRef Status"),
+        null=True,
+        blank=True,
+    )
     estatus = models.IntegerField(
         _("Process estatus"),
         choices=ProcessStatus.choices,
@@ -448,6 +528,16 @@ class ArticleDocxMarkup(CommonControlField, ClusterableModel):
         title = self.title or ""
         return f"{title} | {self.estatus}"
 
+    def get_marked_file_status(self):
+        if not self.marked_file:
+            return "Aguardando processamento"
+        if self.xref_status:
+            total = self.xref_status.get("total_references", 0)
+            cits = self.xref_status.get("total_citations", 0)
+            return f"✓ Disponível ({total} refs, {cits} citações)"
+        return "✓ Disponível"
+    get_marked_file_status.short_description = _("DOCX Marcado")
+
     @property
     def url_download(self):
         return self.file_xml.url if self.file_xml else None
@@ -510,6 +600,9 @@ class MarkupXML(ArticleDocxMarkup):
     panels_xml = [
         FieldPanel("file_xml", widget=ReadOnlyFileWidget()),
         FieldPanel("text_xml"),
+        ReprocessButtonPanel(
+            confirm_message="Isso irá descartar as edições manuais e reprocessar o DOCX original. Continuar?"
+        ),
     ]
 
     panels_details = [
@@ -551,3 +644,21 @@ class MarkupXML(ArticleDocxMarkup):
 
     class Meta:
         proxy = True
+
+
+class ProcessedDocx(ArticleDocxMarkup):
+    panels_doc = [
+        FieldPanel("title"),
+        FieldPanel("marked_file", widget=DownloadMarkedFileWidget()),
+        FieldPanel("xref_status", widget=XrefStatusWidget()),
+        ReprocessButtonPanel(confirm_message="Reprocessar este documento?"),
+    ]
+
+    edit_handler = TabbedInterface([
+        ObjectList(panels_doc, heading=_("DOCX Marcado")),
+    ])
+
+    class Meta:
+        proxy = True
+        verbose_name = _("DOCX processado")
+        verbose_name_plural = _("DOCXs processados")

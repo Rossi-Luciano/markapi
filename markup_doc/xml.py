@@ -16,6 +16,49 @@ from markup_doc.labeling_utils import (
     proccess_special_content,
     sanitize_inline_xml_fragment,
 )
+from markup_doc.xref import make_text_xref_fn_from_refs
+
+_XREF_SPLIT_RE = re.compile(r'(<xref[^>]*>.*?</xref>)', re.DOTALL)
+
+
+def _apply_to_segments(text, fn):
+    """Apply fn only to plain-text segments, leaving existing <xref> tags intact."""
+    parts = _XREF_SPLIT_RE.split(text)
+    return ''.join(fn(part) if i % 2 == 0 else part for i, part in enumerate(parts))
+
+
+def _apply_xref_map(paragraph, xref_map):
+    """Apply xref_map replacements one citation at a time.
+
+    Each citation is applied via a fresh _apply_to_segments pass so that
+    <xref> tags created by earlier iterations are respected as boundaries
+    for later, shorter keys (e.g. "20" is replaced first, then "2" must
+    not touch the already-created rid="B20" attribute).
+    """
+    for cit_text, rid in sorted(xref_map.items(), key=lambda x: -len(x[0])):
+        replacement = f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>'
+        paragraph = _apply_to_segments(
+            paragraph, lambda seg, ct=cit_text, r=replacement: seg.replace(ct, r)
+        )
+    return paragraph
+
+
+def _apply_proccess_labeled_text(paragraph, data_back):
+    """Apply proccess_labeled_text to each plain-text segment independently."""
+    def process_segment(seg):
+        if not seg:
+            return seg
+        refs = proccess_labeled_text(seg, data_back)
+        for r in refs:
+            if r.get('refid') and not re.search(
+                rf'<xref[^>]*>{re.escape(r["cita"])}</xref>', seg
+            ):
+                seg = seg.replace(
+                    r['cita'],
+                    f'<xref ref-type="bibr" rid="{r["refid"]}">{r["cita"]}</xref>',
+                )
+        return seg
+    return _apply_to_segments(paragraph, process_segment)
 
 
 def extract_date(texto):
@@ -42,7 +85,18 @@ def extract_date(texto):
     return None  # No se encontró
 
 
-def get_xml(article_docx, data_front, data, data_back):
+def get_xml(article_docx, data_front, data, data_back, xref_map=None):
+    # Build narrative Author (year) xref replacer from data_back reference texts
+    _text_xref_refs = [
+        {
+            'rid': item['value'].get('refid') or f'B{i + 1}',
+            'ref_text': item['value'].get('paragraph') or '',
+        }
+        for i, item in enumerate(data_back)
+        if item.get('value')
+    ]
+    _text_xref_fn = make_text_xref_fn_from_refs(_text_xref_refs)
+
     # Crear el elemento raíz
     nsmap = {
         "mml": "http://www.w3.org/1998/Math/MathML",
@@ -437,11 +491,11 @@ def get_xml(article_docx, data_front, data, data_back):
 
         node_tmp = etree.SubElement(node, "abstract")
 
-        if vals:
+        if vals and vals[0]:
             node_tmp2 = etree.SubElement(node_tmp, "title")
             append_fragment(node_tmp2, vals[0].value.get("paragraph"))
 
-        if vals2:
+        if vals2 and vals2[0]:
             # Encuentra su índice original en article_docx.content
             last_index = data_t.index(vals2[0])
 
@@ -588,7 +642,7 @@ def get_xml(article_docx, data_front, data, data_back):
 
         if d["value"]["label"] == "<list>":
             re_search = re.search(r'list list-type="(.*?)"\]', d["value"]["paragraph"])
-            list_type = re_search.group(1)
+            list_type = re_search.group(1) if re_search else "bullet"
             attrib = {"list-type": list_type}
 
             if subsec:
@@ -603,7 +657,7 @@ def get_xml(article_docx, data_front, data, data_back):
                 d["value"]["paragraph"],
                 re.DOTALL,
             )
-            content_list = content_list.group(1)
+            content_list = content_list.group(1) if content_list else ""
             node_list_text = content_list.replace(
                 "[list-item]", "<list-item><p>"
             ).replace("[/list-item]", "</p></list-item>")
@@ -615,7 +669,7 @@ def get_xml(article_docx, data_front, data, data_back):
                 node_list.append(child)
 
         if d["value"]["label"] == "<table>" or d["value"]["label"] == "<table-caption>":
-            attrib = {"id": d["value"]["tabid"]}
+            attrib = {"id": d["value"].get("tabid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -637,6 +691,7 @@ def get_xml(article_docx, data_front, data, data_back):
             node_table_text = re.sub(r"\s*\n\s*", "", node_table_text).replace(
                 "<br>", ""
             )
+            node_table_text = re.sub(r"&(?!\w+;|#\d+;)", "&amp;", node_table_text)
 
             tabla_element = parse_xml_fragment(node_table_text)
 
@@ -654,7 +709,7 @@ def get_xml(article_docx, data_front, data, data_back):
             append_fragment(node_fnp, d["value"]["paragraph"])
 
         if d["value"]["label"] == "<fig>":
-            attrib = {"id": d["value"]["figid"]}
+            attrib = {"id": d["value"].get("figid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -663,11 +718,9 @@ def get_xml(article_docx, data_front, data, data_back):
                 node_p = etree.SubElement(node, "p")
                 node_fig = etree.SubElement(node_p, "fig", attrib=attrib)
 
-            etree.SubElement(node_fig, "label").text = d["value"]["figlabel"]
+            etree.SubElement(node_fig, "label").text = d["value"].get("figlabel")
             node_caption = etree.SubElement(node_fig, "caption")
-            etree.SubElement(node_caption, "title").text = (
-                d["value"]["title"] if "title" in d["value"] else None
-            )
+            etree.SubElement(node_caption, "title").text = d["value"].get("title")
 
             Image = get_image_model()
             image_id = d["value"]["image"]
@@ -688,7 +741,7 @@ def get_xml(article_docx, data_front, data, data_back):
             append_fragment(node_attrib, d["value"]["paragraph"])
 
         if d["value"]["label"] == "<disp-formula>":
-            attrib = {"id": d["value"]["eid"]}
+            attrib = {"id": d["value"].get("eid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -705,7 +758,7 @@ def get_xml(article_docx, data_front, data, data_back):
                     append_fragment(node_f, c["value"])
 
         if d["value"]["label"] == "<inline-formula>":
-            attrib = {"id": d["value"]["eid"]}
+            attrib = {"id": d["value"].get("eid", "")}
 
             if subsec:
                 node_p = etree.SubElement(node_sec, "p")
@@ -731,31 +784,21 @@ def get_xml(article_docx, data_front, data, data_back):
             else:
                 node_p = etree.SubElement(node, "p")
 
-            # refs = extraer_citas_apa(d['value']['paragraph'].replace('[style name="italic"]', '').replace('[/style]', ''), data_back)
-            # refs = extraer_citas_apa(d['value']['paragraph'].replace('<italic>', '').replace('</italic>', ''), data_back)
-            if "xref" not in d["value"]["paragraph"]:
-                refs = proccess_labeled_text(d["value"]["paragraph"], data_back)
-                for r in refs:
-                    # print(f"r in refs: {r}")
-                    d["value"]["paragraph"] = d["value"]["paragraph"].replace(
-                        r["cita"],
-                        f"<xref ref-type=\"bibr\" rid=\"{r['refid']}\">{r['cita']}</xref>",
-                    )
-                    """
-                    if 'et al' in r['cita']:
-                        et_al_replace = r['cita'].replace('et al', '<italic>et al</italic>')
-                        d['value']['paragraph'] = d['value']['paragraph'].replace(et_al_replace, f"<xref reftype=\"bibr\" rid=\"{r['refid']}\">{et_al_replace}</xref>")
-                    else:
-                        #print(r['cita'])
-                        d['value']['paragraph'] = d['value']['paragraph'].replace(r['cita'], f"<xref reftype=\"bibr\" rid=\"{r['refid']}\">{r['cita']}</xref>")
-                    """
+            # Apply all xref passes to every paragraph, operating segment-by-segment
+            # so that citations already marked by tasks.py pre-processing are not
+            # double-wrapped, and citations in the same paragraph that were missed
+            # still get processed.
+            if xref_map:
+                d["value"]["paragraph"] = _apply_xref_map(d["value"]["paragraph"], xref_map)
+            d["value"]["paragraph"] = _text_xref_fn(d["value"]["paragraph"])
+            d["value"]["paragraph"] = _apply_proccess_labeled_text(d["value"]["paragraph"], data_back)
 
-                elements = proccess_special_content(d["value"]["paragraph"], data)
-                for e in elements:
-                    d["value"]["paragraph"] = d["value"]["paragraph"].replace(
-                        e["label"],
-                        f"<xref ref-type=\"{e['reftype']}\" rid=\"{e['id']}\">{e['label']}</xref>",
-                    )
+            elements = proccess_special_content(d["value"]["paragraph"], data)
+            for e in elements:
+                d["value"]["paragraph"] = d["value"]["paragraph"].replace(
+                    e["label"],
+                    f"<xref ref-type=\"{e['reftype']}\" rid=\"{e['id']}\">{e['label']}</xref>",
+                )
 
             append_fragment(node_p, d["value"]["paragraph"])
 
@@ -823,19 +866,16 @@ def get_xml(article_docx, data_front, data, data_back):
             append_fragment(node_tit, d["value"]["paragraph"])
         if d["value"]["label"] == "<p>":
             values = d["value"]
-            node_ref = etree.SubElement(
-                node_reflist, "ref", attrib={"id": values["refid"]}
-            )
-            # node_label = etree.SubElement(node_ref, 'label')
-            # append_fragment(node_label, values['refid'].replace('B', ''))
+            refid = values.get("refid") or f"B{i + 1}"
+            node_ref = etree.SubElement(node_reflist, "ref", attrib={"id": refid})
             node_mix = etree.SubElement(node_ref, "mixed-citation")
             append_fragment(node_mix, values["paragraph"])
 
-            if values["reftype"] == "journal":
+            if values.get("reftype") == "journal":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -889,11 +929,11 @@ def get_xml(article_docx, data_front, data, data_back):
                         values["uri"],
                     )
 
-            if values["reftype"] == "book":
+            if values.get("reftype") == "book":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -926,11 +966,11 @@ def get_xml(article_docx, data_front, data, data_back):
                     etree.SubElement(node_ref, "lpage"), str(values["lpage"])
                 )
 
-            if values["reftype"] == "data":
+            if values.get("reftype") == "data":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -967,11 +1007,11 @@ def get_xml(article_docx, data_front, data, data_back):
                         values["uri"],
                     )
 
-            if values["reftype"] == "webpage":
+            if values.get("reftype") == "webpage":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -1000,11 +1040,11 @@ def get_xml(article_docx, data_front, data, data_back):
                     etree.SubElement(node_ref, "access-date"), values["access_date"]
                 )
 
-            if values["reftype"] == "confproc":
+            if values.get("reftype") == "confproc":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}
@@ -1037,11 +1077,11 @@ def get_xml(article_docx, data_front, data, data_back):
                 )
                 append_fragment(etree.SubElement(node_ref, "page"), values["pages"])
 
-            if values["reftype"] == "thesis":
+            if values.get("reftype") == "thesis":
                 node_elem = etree.SubElement(
                     node_ref,
                     "element-citation",
-                    attrib={"publication-type": values["reftype"]},
+                    attrib={"publication-type": values.get("reftype")},
                 )
                 node_person = etree.SubElement(
                     node_elem, "person-group", attrib={"person-group-type": "author"}

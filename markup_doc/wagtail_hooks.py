@@ -27,6 +27,7 @@ from markup_doc.models import (
     Issue,
     JournalModel,
     MarkupXML,
+    ProcessedDocx,
     ProcessStatus,
     UploadDocx,
 )
@@ -45,6 +46,12 @@ def register_admin_urls():
         path(
             "download-xml/<int:id_registro>/", views.generate_xml, name="generate_xml"
         ),
+        path(
+            "download-marked-docx/<int:pk>/",
+            views.download_marked_docx,
+            name="download_marked_docx",
+        ),
+        path("reprocess/<int:pk>/", views.reprocess, name="reprocess"),
         path("extract-citation/", views.extract_citation, name="extract_citation"),
         path("get_journal/", views.get_journal, name="get_journal"),
         path("download-zip/", views.generate_zip, name="generate_zip"),
@@ -190,6 +197,18 @@ class JournalModelViewSet(SnippetViewSet):
         return response
 
 
+class ProcessedDocxViewSet(SnippetViewSet):
+    model = ProcessedDocx
+    menu_label = _("DOCX processado")
+    menu_icon = "doc-full-inverse"
+    add_to_admin_menu = False
+    exclude_from_explorer = False
+    list_per_page = 20
+    list_display = ("title", "get_estatus_display", "get_marked_file_status")
+    search_fields = ("title",)
+    list_filter = ("estatus",)
+    
+    
 class IssueViewSet(SnippetViewSet):
     model = Issue
     menu_label = _("Fascículos")
@@ -232,6 +251,7 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_order = get_menu_order("markup_doc")
     items = (
         UploadDocxViewSet,
+        ProcessedDocxViewSet,
         XMLSPSSnippetViewSetGroup,
         IssueViewSet,
     )

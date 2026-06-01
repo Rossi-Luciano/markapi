@@ -339,6 +339,10 @@ class functionsDocx:
             is_numPr = False
             if isinstance(element, CT_P):
                 obj = {}
+                paragraph = element
+                text_paragraph = []
+                _ns_w = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+                is_numPr = paragraph.find('.//w:numPr', namespaces=_ns_w) is not None
 
                 namespaces = {
                     "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main",
