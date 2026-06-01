@@ -448,20 +448,19 @@ def get_labels(article_id, user_id):
     # corrupt rid="B2" attribute values on the second iteration of the loop).
     _xref_split_re = re.compile(r'(<xref[^>]*>.*?</xref>)', re.DOTALL)
 
-    def _apply_xref_map_safe(text, xmap):
+    def _apply_to_seg(text, fn):
         parts = _xref_split_re.split(text)
-        result = []
-        for i, part in enumerate(parts):
-            if i % 2 != 0:
-                result.append(part)
-                continue
-            for cit_text, rid in sorted(xmap.items(), key=lambda x: -len(x[0])):
-                part = part.replace(
-                    cit_text,
-                    f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>',
-                )
-            result.append(part)
-        return ''.join(result)
+        return ''.join(fn(p) if i % 2 == 0 else p for i, p in enumerate(parts))
+
+    def _apply_xref_map_safe(text, xmap):
+        # Apply one citation at a time so that <xref> tags created by earlier
+        # iterations become boundaries for later, shorter keys.
+        for cit_text, rid in sorted(xmap.items(), key=lambda x: -len(x[0])):
+            replacement = f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>'
+            text = _apply_to_seg(
+                text, lambda seg, ct=cit_text, r=replacement: seg.replace(ct, r)
+            )
+        return text
 
     for item in stream_data_body:
         if item.get('value', {}).get('label') == '<p>':

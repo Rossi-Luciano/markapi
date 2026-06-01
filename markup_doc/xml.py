@@ -28,15 +28,19 @@ def _apply_to_segments(text, fn):
 
 
 def _apply_xref_map(paragraph, xref_map):
-    """Apply xref_map replacements segment-by-segment to avoid double-wrapping."""
-    def replace_in_segment(seg):
-        for cit_text, rid in sorted(xref_map.items(), key=lambda x: -len(x[0])):
-            seg = seg.replace(
-                cit_text,
-                f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>',
-            )
-        return seg
-    return _apply_to_segments(paragraph, replace_in_segment)
+    """Apply xref_map replacements one citation at a time.
+
+    Each citation is applied via a fresh _apply_to_segments pass so that
+    <xref> tags created by earlier iterations are respected as boundaries
+    for later, shorter keys (e.g. "20" is replaced first, then "2" must
+    not touch the already-created rid="B20" attribute).
+    """
+    for cit_text, rid in sorted(xref_map.items(), key=lambda x: -len(x[0])):
+        replacement = f'<xref ref-type="bibr" rid="{rid}">{cit_text}</xref>'
+        paragraph = _apply_to_segments(
+            paragraph, lambda seg, ct=cit_text, r=replacement: seg.replace(ct, r)
+        )
+    return paragraph
 
 
 def _apply_proccess_labeled_text(paragraph, data_back):
