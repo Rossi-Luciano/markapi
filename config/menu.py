@@ -1,6 +1,6 @@
 WAGTAIL_MENU_APPS_ORDER = [
-    "sps_package_validation",
     "markup_doc",
+    "reference",
     "scielo",
     "tracker",
     "model_ai",

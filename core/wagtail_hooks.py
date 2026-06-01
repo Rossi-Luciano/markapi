@@ -51,7 +51,7 @@ def group_wagtail_cms_menu_items(request, menu_items):
     )
     menu_items.append(
         SubmenuMenuItem(
-            _("Wagtail CMS"),
+            _("Content Manager"),
             cms_menu,
             icon_name="folder-open-inverse",
             name="wagtail_cms",
