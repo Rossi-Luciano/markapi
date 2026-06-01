@@ -1,3 +1,4 @@
+from config.menu import get_menu_order
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -5,6 +6,7 @@ from django.templatetags.static import static
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from reference.wagtail_hooks import ReferenceModelViewSet
 from wagtail import hooks
 from wagtail.admin import messages
 from wagtail.snippets.models import register_snippet
@@ -14,12 +16,15 @@ from wagtail.snippets.views.snippets import (
     SnippetViewSet,
     SnippetViewSetGroup,
 )
-from wagtail_modeladmin.options import ModelAdmin
+from xml_manager.wagtail_hooks import (
+    XMLDocumentHTMLSnippetViewSet,
+    XMLDocumentPDFSnippetViewSet,
+)
 
-from config.menu import get_menu_order
 from markup_doc import views
 from markup_doc.models import (
     CollectionModel,
+    Issue,
     JournalModel,
     MarkupXML,
     ProcessStatus,
@@ -27,11 +32,14 @@ from markup_doc.models import (
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
+<<<<<<< HEAD
 from xml_manager.wagtail_hooks import (
     SPSPackageValidationSnippetViewSet,
     XMLDocumentHTMLSnippetViewSet,
     XMLDocumentPDFSnippetViewSet,
 )
+=======
+>>>>>>> 92e3c5e1efc5b93532d4cc264f5c408e416a3ff4
 
 
 @hooks.register("register_admin_urls")
@@ -51,8 +59,9 @@ def register_admin_urls():
 @hooks.register("insert_editor_js")
 def xref_js():
     return format_html(
-        '<script src="{}"></script>',
+        '<script src="{}"></script><script src="{}"></script>',
         static("js/xref-button.js"),
+        static("js/issue-autocomplete-filter.js"),
     )
 
 
@@ -184,6 +193,18 @@ class JournalModelViewSet(SnippetViewSet):
         return response
 
 
+class IssueViewSet(SnippetViewSet):
+    model = Issue
+    menu_label = _("Fascículos")
+    menu_icon = "date"
+    add_to_admin_menu = False
+    exclude_from_explorer = False
+    list_per_page = 20
+    list_display = ("journal", "volume", "number", "year")
+    search_fields = ("journal__title", "volume", "number", "year")
+    list_filter = ("journal", "year")
+
+
 class XMLSPSSnippetViewSetGroup(SnippetViewSetGroup):
     menu_name = "xml_sps"
     menu_label = _("XML SPS")
@@ -215,6 +236,7 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     items = (
         UploadDocxViewSet,
         XMLSPSSnippetViewSetGroup,
+        IssueViewSet,
     )
 
 
