@@ -83,13 +83,29 @@ def clean_labels(text):
 
 
 @celery_app.task()
-def task_sync_journals_from_api(user_id=None, collection_acron=None):
-    sync_journals_from_api()
+def task_sync_journals_from_api(
+    user_id=None,
+    collection_acron=None,
+    issn_scielo=None,
+    from_date_updated=None,
+):
+    sync_journals_from_api(
+        collection_acron=collection_acron,
+        issn_scielo=issn_scielo,
+        from_date_updated=from_date_updated,
+    )
 
 
 @celery_app.task()
-def task_sync_issues_from_api(user_id=None):
-    sync_issues_from_api()
+def task_sync_issues_from_api(
+    user_id=None,
+    issn_scielo=None,
+    from_date_updated=None,
+):
+    sync_issues_from_api(
+        issn_scielo=issn_scielo,
+        from_date_updated=from_date_updated,
+    )
 
 
 @celery_app.task()
