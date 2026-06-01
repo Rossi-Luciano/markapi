@@ -14,6 +14,7 @@ from wagtail.snippets.views.snippets import (
     SnippetViewSet,
     SnippetViewSetGroup,
 )
+from wagtail_modeladmin.options import ModelAdmin
 
 from config.menu import get_menu_order
 from markup_doc import views
@@ -25,10 +26,13 @@ from markup_doc.models import (
     ProcessStatus,
     UploadDocx,
 )
-
-from markup_doc import views
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
+from reference.wagtail_hooks import ReferenceModelViewSet
+from xml_manager.wagtail_hooks import (
+    XMLDocumentHTMLSnippetViewSet,
+    XMLDocumentPDFSnippetViewSet,
+)
 
 
 @hooks.register("register_admin_urls")
@@ -70,9 +74,9 @@ class ArticleDocxCreateView(CreateView):
         self.object = form.save_all(self.request.user)
         self.object.estatus = ProcessStatus.PROCESSING
         self.object.save()
-        transaction.on_commit(
-            lambda: get_labels.delay(self.object.title, self.request.user.id)
-        )
+        article_pk = self.object.pk
+        user_id = self.request.user.id
+        transaction.on_commit(lambda: get_labels.delay(article_pk, user_id))
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -194,9 +198,32 @@ class IssueViewSet(SnippetViewSet):
     list_filter = ("journal", "year")
 
 
+class XMLSPSSnippetViewSetGroup(SnippetViewSetGroup):
+    menu_name = "xml_sps"
+    menu_label = _("XML SPS")
+    menu_icon = "code"
+    items = (
+        MarkupXMLViewSet,
+        XMLDocumentPDFSnippetViewSet,
+        XMLDocumentHTMLSnippetViewSet,
+        ReferenceModelViewSet,
+    )
+
+
+class ScieloSnippetViewSetGroup(SnippetViewSetGroup):
+    menu_name = "scielo"
+    menu_label = _("SciELO")
+    menu_icon = "folder-open-inverse"
+    menu_order = get_menu_order("scielo")
+    items = (
+        CollectionModelViewSet,
+        JournalModelViewSet,
+    )
+
+
 class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_name = "markup_doc"
-    menu_label = _("Marcação editorial")
+    menu_label = _("Marcação")
     menu_icon = "edit"
     menu_order = get_menu_order("markup_doc")
     items = (
@@ -204,8 +231,9 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
         JournalModelViewSet,
         IssueViewSet,
         UploadDocxViewSet,
-        MarkupXMLViewSet,
+        XMLSPSSnippetViewSetGroup,
     )
 
 
+register_snippet(ScieloSnippetViewSetGroup)
 register_snippet(MarkupSnippetViewSetGroup)

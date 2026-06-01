@@ -10,12 +10,7 @@ from wagtail.admin.panels import FieldPanel
 from wagtail.admin.ui.tables import Column
 from wagtail.admin.widgets.button import Button
 from wagtail.snippets.models import register_snippet
-from wagtail.snippets.views.snippets import (
-    CreateView,
-    EditView,
-    SnippetViewSet,
-    SnippetViewSetGroup,
-)
+from wagtail.snippets.views.snippets import CreateView, EditView, SnippetViewSet
 
 from config.menu import get_menu_order
 
@@ -161,7 +156,7 @@ class XMLDocumentPDFSnippetViewSet(SnippetViewSet):
     verbose_name_plural = _("XML Document PDFs")
     icon = "doc-full"
     menu_name = "xml_manager"
-    menu_label = _("PDF derivados")
+    menu_label = _("PDFs derivados")
     menu_icon = "doc-full"
     add_to_admin_menu = False
 
@@ -182,7 +177,7 @@ class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
     verbose_name_plural = _("XML Document HTMLs")
     icon = "doc-full"
     menu_name = "xml_manager"
-    menu_label = _("HTML derivados")
+    menu_label = _("HTMLs derivados")
     menu_icon = "doc-full-inverse"
     add_to_admin_menu = False
 
@@ -202,12 +197,13 @@ class SPSPackageValidationSnippetViewSet(SnippetViewSet):
     edit_view_class = SPSPackageValidationEditView
     copy_view_enabled = False
     verbose_name = _("SPS package validation")
-    verbose_name_plural = _("Validar pacote SPS")
+    verbose_name_plural = _("Validar SPS")
     icon = "sps-package-validation"
     menu_name = "sps_package_validation"
-    menu_label = _("Validar pacote SPS")
+    menu_label = _("Validar SPS")
     menu_icon = "sps-package-validation"
-    add_to_admin_menu = False
+    add_to_admin_menu = True
+    menu_order = get_menu_order("sps_package_validation")
 
     list_display = (
         "__str__",
@@ -224,20 +220,7 @@ class SPSPackageValidationSnippetViewSet(SnippetViewSet):
     search_fields = ("package_document__title",)
 
 
-class XMLDocumentSnippetViewSetGroup(SnippetViewSetGroup):
-    menu_name = "xml_manager"
-    menu_label = _("Gestão de XML")
-    menu_icon = "code"
-    menu_order = get_menu_order("xml_manager")
-    items = (
-        XMLDocumentSnippetViewSet,
-        XMLDocumentPDFSnippetViewSet,
-        XMLDocumentHTMLSnippetViewSet,
-        SPSPackageValidationSnippetViewSet,
-    )
-
-
-register_snippet(XMLDocumentSnippetViewSetGroup)
+register_snippet(SPSPackageValidationSnippetViewSet)
 
 
 @hooks.register("register_icons")

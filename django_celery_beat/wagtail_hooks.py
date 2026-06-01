@@ -190,6 +190,8 @@ class TasksModelsAdminGroup(ModelAdminGroup):
     menu_label = _("Tarefas agendadas")
     menu_icon = "time"
     menu_order = get_menu_order("django_celery_beat")
+    add_to_admin_menu = False
+    add_to_settings_menu = True
     items = (
         PeriodicTaskAdmin,
         CrontabScheduleAdmin,
