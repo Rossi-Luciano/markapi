@@ -603,7 +603,7 @@ class functionsDocx:
                                 found_fb = False
                                 review_fb = False
                                 found_hiperlinks = False
-                                sections = [sections[-1]]
+                                sections = [sections[-1]] if sections else []
                                 first_block = ""
                                 tmp_content = []
                                 abstract_mode = False
