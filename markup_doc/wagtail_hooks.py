@@ -1,4 +1,3 @@
-from config.menu import get_menu_order
 from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.template.response import TemplateResponse
@@ -6,7 +5,6 @@ from django.templatetags.static import static
 from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from reference.wagtail_hooks import ReferenceModelViewSet
 from wagtail import hooks
 from wagtail.admin import messages
 from wagtail.snippets.models import register_snippet
@@ -16,11 +14,8 @@ from wagtail.snippets.views.snippets import (
     SnippetViewSet,
     SnippetViewSetGroup,
 )
-from xml_manager.wagtail_hooks import (
-    XMLDocumentHTMLSnippetViewSet,
-    XMLDocumentPDFSnippetViewSet,
-)
 
+from config.menu import get_menu_order
 from markup_doc import views
 from markup_doc.models import (
     CollectionModel,
@@ -33,12 +28,14 @@ from markup_doc.models import (
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
+from reference.wagtail_hooks import ReferenceModelViewSet
 
 from xml_manager.wagtail_hooks import (
     SPSPackageValidationSnippetViewSet,
     XMLDocumentHTMLSnippetViewSet,
     XMLDocumentPDFSnippetViewSet,
 )
+
 
 @hooks.register("register_admin_urls")
 def register_admin_urls():
@@ -199,7 +196,7 @@ class JournalModelViewSet(SnippetViewSet):
 
 class ProcessedDocxViewSet(SnippetViewSet):
     model = ProcessedDocx
-    menu_label = _("DOCX processado")
+    menu_label = _("Validar XREF")
     menu_icon = "doc-full-inverse"
     add_to_admin_menu = False
     exclude_from_explorer = False
@@ -207,8 +204,8 @@ class ProcessedDocxViewSet(SnippetViewSet):
     list_display = ("title", "get_estatus_display", "get_marked_file_status")
     search_fields = ("title",)
     list_filter = ("estatus",)
-    
-    
+
+
 class IssueViewSet(SnippetViewSet):
     model = Issue
     menu_label = _("Fascículos")
@@ -228,6 +225,7 @@ class XMLSPSSnippetViewSetGroup(SnippetViewSetGroup):
     items = (
         MarkupXMLViewSet,
         SPSPackageValidationSnippetViewSet,
+        ProcessedDocxViewSet,
         XMLDocumentPDFSnippetViewSet,
         XMLDocumentHTMLSnippetViewSet,
     )
@@ -241,6 +239,7 @@ class ScieloSnippetViewSetGroup(SnippetViewSetGroup):
     items = (
         CollectionModelViewSet,
         JournalModelViewSet,
+        IssueViewSet,
     )
 
 
@@ -251,9 +250,7 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_order = get_menu_order("markup_doc")
     items = (
         UploadDocxViewSet,
-        ProcessedDocxViewSet,
         XMLSPSSnippetViewSetGroup,
-        IssueViewSet,
     )
 
 
