@@ -22,12 +22,14 @@ from markup_doc.models import (
     Issue,
     JournalModel,
     MarkupXML,
+    ProcessedDocx,
     ProcessStatus,
     UploadDocx,
 )
 from markup_doc.sync_api import sync_collection_from_api
 from markup_doc.tasks import get_labels, task_sync_journals_from_api, update_xml
 from reference.wagtail_hooks import ReferenceModelViewSet
+
 from xml_manager.wagtail_hooks import (
     SPSPackageValidationSnippetViewSet,
     XMLDocumentHTMLSnippetViewSet,
@@ -41,6 +43,12 @@ def register_admin_urls():
         path(
             "download-xml/<int:id_registro>/", views.generate_xml, name="generate_xml"
         ),
+        path(
+            "download-marked-docx/<int:pk>/",
+            views.download_marked_docx,
+            name="download_marked_docx",
+        ),
+        path("reprocess/<int:pk>/", views.reprocess, name="reprocess"),
         path("extract-citation/", views.extract_citation, name="extract_citation"),
         path("get_journal/", views.get_journal, name="get_journal"),
         path("download-zip/", views.generate_zip, name="generate_zip"),
@@ -242,6 +250,7 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_order = get_menu_order("markup_doc")
     items = (
         UploadDocxViewSet,
+        ProcessedDocxViewSet,
         XMLSPSSnippetViewSetGroup,
     )
 
