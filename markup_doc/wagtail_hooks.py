@@ -250,7 +250,6 @@ class MarkupSnippetViewSetGroup(SnippetViewSetGroup):
     menu_order = get_menu_order("markup_doc")
     items = (
         UploadDocxViewSet,
-        ProcessedDocxViewSet,
         XMLSPSSnippetViewSetGroup,
     )
 
