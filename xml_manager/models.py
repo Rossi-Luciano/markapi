@@ -122,6 +122,58 @@ class XMLDocumentHTML(models.Model):
         return html_instance
 
 
+class XMLDocumentPubMed(models.Model):
+    xml_document = models.ForeignKey(
+        XMLDocument,
+        on_delete=models.CASCADE,
+        related_name="pubmeds",
+        verbose_name=_("XML Document"),
+    )
+    pubmed_file = models.FileField(
+        upload_to="xml_manager/pubmed/", verbose_name=_("PubMed XML File")
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Uploaded At"))
+
+    def __str__(self):
+        return f"PubMed XML for {self.xml_document.xml_file.name}"
+
+    class Meta:
+        verbose_name = _("XML Document PubMed")
+        verbose_name_plural = _("XML Document PubMeds")
+
+    @classmethod
+    def create(cls, xml_document, pubmed_file):
+        instance = cls(xml_document=xml_document, pubmed_file=pubmed_file)
+        instance.save()
+        return instance
+
+
+class XMLDocumentPMC(models.Model):
+    xml_document = models.ForeignKey(
+        XMLDocument,
+        on_delete=models.CASCADE,
+        related_name="pmcs",
+        verbose_name=_("XML Document"),
+    )
+    pmc_file = models.FileField(
+        upload_to="xml_manager/pmc/", verbose_name=_("PMC XML File")
+    )
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Uploaded At"))
+
+    def __str__(self):
+        return f"PMC XML for {self.xml_document.xml_file.name}"
+
+    class Meta:
+        verbose_name = _("XML Document PMC")
+        verbose_name_plural = _("XML Document PMCs")
+
+    @classmethod
+    def create(cls, xml_document, pmc_file):
+        instance = cls(xml_document=xml_document, pmc_file=pmc_file)
+        instance.save()
+        return instance
+
+
 class SPSPackageValidation(models.Model):
     package_document = models.OneToOneField(
         "wagtaildocs.Document",

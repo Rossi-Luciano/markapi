@@ -34,6 +34,9 @@ from xml_manager.wagtail_hooks import (
     SPSPackageValidationSnippetViewSet,
     XMLDocumentHTMLSnippetViewSet,
     XMLDocumentPDFSnippetViewSet,
+    XMLDocumentPMCSnippetViewSet,
+    XMLDocumentPubMedSnippetViewSet,
+    XMLDocumentSnippetViewSet,
 )
 
 
@@ -226,8 +229,11 @@ class XMLSPSSnippetViewSetGroup(SnippetViewSetGroup):
         MarkupXMLViewSet,
         SPSPackageValidationSnippetViewSet,
         ProcessedDocxViewSet,
+        XMLDocumentSnippetViewSet,
         XMLDocumentPDFSnippetViewSet,
         XMLDocumentHTMLSnippetViewSet,
+        XMLDocumentPubMedSnippetViewSet,
+        XMLDocumentPMCSnippetViewSet,
     )
 
 

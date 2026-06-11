@@ -1,11 +1,14 @@
 import csv
 import json
 import os
+from copy import deepcopy
 
 from packtools import data_checker
 from packtools.sps.formats.pdf.pipeline import docx
 from packtools.sps.formats.pdf.pipeline.xml import extract_article_main_language
 from packtools.sps.formats.pdf.utils import file_utils
+from packtools.sps.formats.pmc import pipeline_pmc
+from packtools.sps.formats.pubmed import pipeline_pubmed
 from packtools.sps.models.article_license import ArticleLicense
 from packtools.sps.pid_provider.models.journal_meta import JournalID, Publisher, Title
 from packtools.sps.pid_provider.xml_sps_lib import XMLWithPre
@@ -180,3 +183,55 @@ def generate_html_for_xml_document(xml_file_path, output_root_dir, config):
 
     # ToDo: Implement HTML generation logic here
     return
+
+
+def generate_pubmed_for_xml_document(xml_file_path, output_root_dir, params=None):
+    if not os.path.exists(output_root_dir):
+        os.makedirs(output_root_dir)
+
+    try:
+        xml_tree = xml_utils.get_xml_tree(xml_file_path)
+    except Exception as e:
+        raise exceptions.XML_File_Parsing_Error(f"Error parsing XML file: {e}")
+
+    try:
+        pubmed_tree = pipeline_pubmed(xml_tree, pretty_print=True)
+    except Exception as e:
+        raise exceptions.XML_File_PubMed_Generation_Error(
+            f"Error converting XML to PubMed: {e}"
+        )
+
+    base_name = os.path.basename(xml_file_path)
+    f_name, f_ext = os.path.splitext(base_name)
+    path_pubmed = os.path.join(output_root_dir, f"{f_name}.pubmed.xml")
+
+    with open(path_pubmed, "w", encoding="utf-8") as fp:
+        fp.write(pubmed_tree)
+
+    return path_pubmed
+
+
+def generate_pmc_for_xml_document(xml_file_path, output_root_dir, params=None):
+    if not os.path.exists(output_root_dir):
+        os.makedirs(output_root_dir)
+
+    try:
+        xml_tree = xml_utils.get_xml_tree(xml_file_path)
+    except Exception as e:
+        raise exceptions.XML_File_Parsing_Error(f"Error parsing XML file: {e}")
+
+    try:
+        pmc_tree = pipeline_pmc(deepcopy(xml_tree), pretty_print=True)
+    except Exception as e:
+        raise exceptions.XML_File_PMC_Generation_Error(
+            f"Error converting XML to PMC: {e}"
+        )
+
+    base_name = os.path.basename(xml_file_path)
+    f_name, f_ext = os.path.splitext(base_name)
+    path_pmc = os.path.join(output_root_dir, f"{f_name}.pmc.xml")
+
+    with open(path_pmc, "w", encoding="utf-8") as fp:
+        fp.write(pmc_tree)
+
+    return path_pmc

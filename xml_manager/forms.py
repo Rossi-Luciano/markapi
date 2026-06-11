@@ -5,7 +5,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.forms import WagtailAdminModelForm
 
-from xml_manager.models import SPSPackageValidation
+from xml_manager.models import SPSPackageValidation, XMLDocument
 
 
 class SPSPackageValidationForm(WagtailAdminModelForm):
@@ -57,3 +57,22 @@ class SPSPackageValidationForm(WagtailAdminModelForm):
             document = Document(title=document_title)
             document.file.save(basename, File(fp), save=True)
         return document
+
+
+class XMLConvertUploadForm(WagtailAdminModelForm):
+    xml_upload = forms.FileField(
+        label=_("XML file"),
+        help_text=_("Upload an XML file (SciELO Publishing Schema) to convert."),
+    )
+
+    class Meta:
+        model = XMLDocument
+        fields = []
+
+    def clean_xml_upload(self):
+        xml_upload = self.cleaned_data["xml_upload"]
+        if not xml_upload.name.lower().endswith(".xml"):
+            raise ValidationError(_("Only .xml files are allowed."))
+        if xml_upload.size == 0:
+            raise ValidationError(_("The file is empty."))
+        return xml_upload

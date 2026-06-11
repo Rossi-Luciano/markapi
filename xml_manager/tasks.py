@@ -12,6 +12,8 @@ from tracker.choices import (
     XML_DOCUMENT_CONVERSION_TO_DOCX_ERROR,
     XML_DOCUMENT_CONVERSION_TO_HTML_ERROR,
     XML_DOCUMENT_CONVERSION_TO_PDF_ERROR,
+    XML_DOCUMENT_CONVERSION_TO_PMC_ERROR,
+    XML_DOCUMENT_CONVERSION_TO_PUBMED_ERROR,
     XML_DOCUMENT_PARSING_ERROR,
     XML_DOCUMENT_UNKNOWN_ERROR,
     XML_DOCUMENT_VALIDATION_ERROR,
@@ -25,6 +27,8 @@ from xml_manager.models import (
     XMLDocument,
     XMLDocumentHTML,
     XMLDocumentPDF,
+    XMLDocumentPMC,
+    XMLDocumentPubMed,
 )
 
 User = get_user_model()
@@ -33,7 +37,7 @@ User = get_user_model()
 def _get_user(request, username=None, user_id=None):
     try:
         return User.objects.get(pk=request.user_id)
-    except AttributeError:
+    except (AttributeError, User.DoesNotExist):
         if user_id:
             return User.objects.get(pk=user_id)
         if username:
@@ -52,6 +56,8 @@ def task_process_xml_document(self, xml_id, user_id=None, username=None):
     task_validate_xml_file.delay(xml_id, user_id=user_id, username=username)
     task_generate_pdf_file.delay(xml_id, user_id=user_id, username=username)
     task_generate_html_file.delay(xml_id, user_id=user_id, username=username)
+    task_generate_pubmed_file.delay(xml_id, user_id=user_id, username=username)
+    task_generate_pmc_file.delay(xml_id, user_id=user_id, username=username)
 
     return True
 
@@ -233,6 +239,128 @@ def task_generate_html_file(self, xml_id, user_id=None, username=None):
             save=True,
         )
         return False
+
+
+@celery_app.task(bind=True, timelimit=-1)
+def task_generate_pubmed_file(self, xml_id, user_id=None, username=None):
+    try:
+        xml_document = XMLDocument.objects.get(id=xml_id)
+    except XMLDocument.DoesNotExist:
+        logging.error(f"XML file with ID {xml_id} does not exist.")
+        return False
+
+    user = _get_user(self.request, username=username, user_id=user_id)
+
+    logging.info(
+        f"Starting PubMed XML generation for XML file {xml_document.xml_file.name}."
+    )
+    try:
+        path_pubmed = utils.generate_pubmed_for_xml_document(
+            xml_document.xml_file.path,
+            output_root_dir=os.path.join(settings.MEDIA_ROOT, "xml_manager", "pubmed"),
+            params={},
+        )
+
+        pubmed_instance = XMLDocumentPubMed(xml_document=xml_document)
+        pubmed_instance.pubmed_file.name = os.path.relpath(
+            path_pubmed, settings.MEDIA_ROOT
+        )
+        pubmed_instance.save()
+
+    except exceptions.XML_File_Parsing_Error as e:
+        logging.error(f"Error during XML parsing: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_PARSING_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    except exceptions.XML_File_PubMed_Generation_Error as e:
+        logging.error(f"Error during PubMed XML generation: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_CONVERSION_TO_PUBMED_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    except Exception as e:
+        logging.error(f"Unexpected error during PubMed XML generation: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_UNKNOWN_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    return True
+
+
+@celery_app.task(bind=True, timelimit=-1)
+def task_generate_pmc_file(self, xml_id, user_id=None, username=None):
+    try:
+        xml_document = XMLDocument.objects.get(id=xml_id)
+    except XMLDocument.DoesNotExist:
+        logging.error(f"XML file with ID {xml_id} does not exist.")
+        return False
+
+    user = _get_user(self.request, username=username, user_id=user_id)
+
+    logging.info(
+        f"Starting PMC XML generation for XML file {xml_document.xml_file.name}."
+    )
+    try:
+        path_pmc = utils.generate_pmc_for_xml_document(
+            xml_document.xml_file.path,
+            output_root_dir=os.path.join(settings.MEDIA_ROOT, "xml_manager", "pmc"),
+            params={},
+        )
+
+        pmc_instance = XMLDocumentPMC(xml_document=xml_document)
+        pmc_instance.pmc_file.name = os.path.relpath(path_pmc, settings.MEDIA_ROOT)
+        pmc_instance.save()
+
+    except exceptions.XML_File_Parsing_Error as e:
+        logging.error(f"Error during XML parsing: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_PARSING_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    except exceptions.XML_File_PMC_Generation_Error as e:
+        logging.error(f"Error during PMC XML generation: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_CONVERSION_TO_PMC_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    except Exception as e:
+        logging.error(f"Unexpected error during PMC XML generation: {e}")
+        XMLDocumentEvent.create(
+            xml_document=xml_document,
+            error_type=XML_DOCUMENT_UNKNOWN_ERROR,
+            data={},
+            message=str(e),
+            save=True,
+        )
+        return False
+
+    return True
 
 
 @celery_app.task(bind=True)

@@ -1,6 +1,7 @@
 import os
 
 from django.contrib import messages
+from django.db import transaction
 from django.http import HttpResponseRedirect
 from django.urls import include, path, reverse
 from django.utils.html import format_html
@@ -12,16 +13,24 @@ from wagtail.admin.widgets.button import Button
 from wagtail.snippets.models import register_snippet
 from wagtail.snippets.views.snippets import CreateView, EditView, SnippetViewSet
 
+from tracker.choices import XML_DOCUMENT_EVENT
+
 from . import urls
-from .forms import SPSPackageValidationForm
+from .forms import SPSPackageValidationForm, XMLConvertUploadForm
 from .models import (
     SPSPackageValidation,
     SPSPackageValidationStatus,
     XMLDocument,
     XMLDocumentHTML,
     XMLDocumentPDF,
+    XMLDocumentPMC,
+    XMLDocumentPubMed,
 )
-from .tasks import task_validate_sps_package
+from .tasks import (
+    task_generate_pmc_file,
+    task_generate_pubmed_file,
+    task_validate_sps_package,
+)
 
 
 class FileNameColumn(Column):
@@ -62,6 +71,20 @@ class ActionColumn(Column):
         url = reverse("process_xml_pk", args=[instance.pk])
         return format_html(
             '<a href="{}" class="button button-small">Processar</a>', url
+        )
+
+
+class LastEventColumn(Column):
+    def get_value(self, instance):
+        event = instance.xmldocumentevent_set.order_by("-created").first()
+        if not event:
+            return "-"
+        label = dict(XML_DOCUMENT_EVENT).get(event.error_type, event.error_type)
+        return format_html(
+            '<span class="status-tag" style="background-color:#ffe5e5;color:#a02020;" '
+            'title="{}">{}</span>',
+            event.message or "",
+            label,
         )
 
 
@@ -142,6 +165,7 @@ class XMLDocumentSnippetViewSet(SnippetViewSet):
         LinkColumn("validation_file", label=_("Validation file")),
         LinkColumn("exceptions_file", label=_("Exceptions file")),
         "uploaded_at",
+        LastEventColumn("last_event", label=_("Last error")),
         ActionColumn("actions", label=_("Action")),
     )
 
@@ -187,6 +211,78 @@ class XMLDocumentHTMLSnippetViewSet(SnippetViewSet):
     )
 
     search_fields = ("html_file",)
+
+
+class XMLConvertCreateView(CreateView):
+    generate_task = None
+
+    def get_form_class(self):
+        return XMLConvertUploadForm
+
+    def get_bound_panel(self, form):
+        return None
+
+    def form_valid(self, form):
+        xml_upload = form.cleaned_data["xml_upload"]
+        xml_document = form.instance
+        xml_document.xml_file = xml_upload
+        xml_document.save()
+        generate_task = self.generate_task
+        transaction.on_commit(lambda: generate_task.delay(xml_document.pk))
+        messages.success(
+            self.request,
+            _("XML uploaded. Conversion started for “%(name)s”.")
+            % {"name": os.path.basename(xml_document.xml_file.name)},
+        )
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class XMLDocumentPubMedCreateView(XMLConvertCreateView):
+    generate_task = task_generate_pubmed_file
+
+
+class XMLDocumentPMCCreateView(XMLConvertCreateView):
+    generate_task = task_generate_pmc_file
+
+
+class XMLDocumentPubMedSnippetViewSet(SnippetViewSet):
+    model = XMLDocumentPubMed
+    add_view_class = XMLDocumentPubMedCreateView
+    verbose_name = _("XML Document PubMed")
+    verbose_name_plural = _("XML Document PubMeds")
+    icon = "doc-full"
+    menu_name = "xml_manager"
+    menu_label = _("PubMeds")
+    menu_icon = "doc-full-inverse"
+    add_to_admin_menu = False
+
+    list_display = (
+        "xml_document",
+        LinkColumn("pubmed_file", "PubMed file"),
+        "uploaded_at",
+    )
+
+    search_fields = ("pubmed_file",)
+
+
+class XMLDocumentPMCSnippetViewSet(SnippetViewSet):
+    model = XMLDocumentPMC
+    add_view_class = XMLDocumentPMCCreateView
+    verbose_name = _("XML Document PMC")
+    verbose_name_plural = _("XML Document PMCs")
+    icon = "doc-full"
+    menu_name = "xml_manager"
+    menu_label = _("PMCs")
+    menu_icon = "doc-full-inverse"
+    add_to_admin_menu = False
+
+    list_display = (
+        "xml_document",
+        LinkColumn("pmc_file", "PMC file"),
+        "uploaded_at",
+    )
+
+    search_fields = ("pmc_file",)
 
 
 class SPSPackageValidationSnippetViewSet(SnippetViewSet):
